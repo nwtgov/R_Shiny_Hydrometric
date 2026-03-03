@@ -11,12 +11,14 @@ downloadUI <- function(id) {
           max-width: 800px;
           margin: 0 auto;
         }
-        .download-section {
-          background-color: white;
+        .download-controls-section {
+          background-color: #f8f9fa;
           padding: 20px;
           border-radius: 5px;
-          box-shadow: 0 0 15px rgba(0,0,0,0.1);
+          border-left: 4px solid #0066cc;
           margin-bottom: 20px;
+          margin-top: 20px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
           .disclaimer-section {
           background-color: #f8f9fa;
@@ -25,154 +27,289 @@ downloadUI <- function(id) {
           border-left: 4px solid #0066cc;
           margin-bottom: 20px;
           font-size: 14px;
+          }
+                .modal-dialog.modal-lg {
+          max-height: 90vh;
+          margin: 1.75rem auto;
         }
-        .flex-container {
+        .modal-content {
+          max-height: 90vh;
           display: flex;
-          gap: 20px;
-          margin-bottom: 30px;
+          flex-direction: column;
         }
-        .flex-item {
-          flex: 1;
+        .modal-body {
+          max-height: calc(90vh - 120px);
+          overflow-y: auto;
+          overflow-x: hidden;
         }
+          .modal-header {
+            flex-shrink: 0;
+          }
+        .flag-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+        .flag-table th, .flag-table td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+        }
+        .flag-table th {
+          background-color: #f8f9fa;
+        }
+        .flag-link {
+          color: #0066cc;
+          text-decoration: underline;
+          cursor: pointer;
+        }
+        .flag-link:hover {
+          color: #004c99;
+        }
+      ")),
+      # javascript for the modal
+      tags$script(HTML("
+        $(document).on('click', '.flag-link#show_column_names', function() {
+          $('#hydro_column_modal').modal('show');
+        });
+        $(document).on('click', '.flag-link#show_station_info', function() {
+          $('#station_modal').modal('show');
+        });
       "))
       ),
 
     div(class = "download-container",
-        h2("Download Data"),
-
-        # add disclaimer section
-        div(class = "flex-container",
-            # Download controls
-          div(class = "flex-item",
-
-        # Hydrometric Data Section
-            div(class = "download-section",
-              h3("Hydrometric Data"),
-              #selectInput(ns("hydro_station"), "Select Station:", choices = NULL), # MA commented out May 20, 2025
-              selectInput(ns("hydro_station_name"), "Select Station by Name:", choices = NULL), # MA Added May 20, 2025
-              selectInput(ns("hydro_station_number"), "Select Station by Number:", choices = NULL), # MA added May 20, 2025
-              selectInput(ns("hydro_parameter"), "Select Parameter:",
-                          choices = c("Flow", "Level")),
-              selectInput(ns("hydro_year"), "Select Year:",
-                          choices = c("2025", "2024", "2023", "2022", "2021", "2020")),
-              downloadButton(ns("download_hydro"), "Download Hydrometric Data")
-        )
+        div(class = "download-controls-section",
+            uiOutput(ns("download_controls"))
         ),
+        div(class = "disclaimer-section",
+            uiOutput(ns("disclaimer_content"))
+        ),
+        uiOutput(ns("hydro_column_modal_content")),
+        uiOutput(ns("station_modal_content"))
 
-        # add disclaimer portal
-        div(class = "flex-item",
-            div(class = "disclaimer-section",
-                h4("Hydrometric Data Disclaimer", style = "font-weight: bold; font-size: 18px;"),
-                HTML("
-                      <p><strong>Recent water level and flow data are provisional and should be interpreted with caution.</strong></p>
-                      <p>Please see <a href='https://wateroffice.ec.gc.ca/disclaimer_info_e.html' target='_blank'>Environment Canada's disclaimer</a> for more information.</p>
-                      <p><strong>Data Notes:</strong></p>
-                      <ul>
-                        <li>Data are provisional and subject to revision</li>
-                        <li>Values may be affected by ice conditions, equipment malfunctions, or other factors</li>
-                        <li>For official data, please contact Environment and Climate Change Canada</li>
-                        <li>Only one parameter may be available at certain stations</li>
-                      </ul>
-                    ")
-                )
-            )
         )
     )
-  )
+
 }
 
 # Server function for download module
-downloadServer <- function(id, first_visits, station_data_types) {
+downloadServer <- function(id, first_visits, language) {
   moduleServer(id, function(input, output, session) {
 
     # Load required data and source in functions
     hydat_path <- "data/Hydat.sqlite3"
-    # MA added May 20, 2025 (post-republish)
     # Create a reactive value to store station information
     station_info <- reactiveVal(NULL)
+
+    # Get available years (adjust this later)
+    all_years <- reactive({
+      req(stations_within_basin)
+      # Get years from station_data_ranges or create a range
+      # For now, using a simple range - adjust as needed
+      years <- c(2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015)
+      sort(years, decreasing = TRUE)
+    })
+
+    # Render disclaimer content
+    output$disclaimer_content <- renderUI({
+      req(language())
+      create_disclaimer_content(language())
+    })
+    # Render column modal content
+    output$hydro_column_modal_content <- renderUI({
+      req(language())
+      create_hydro_column_modal_content(language())
+    })
+    # Render cstation info modal content
+    output$station_modal_content <- renderUI({
+      req(language())
+      create_station_modal_content(language())
+    })
 
     # MA added May 23, 2025 (available_parameters)
     # Add reactive to track which parameters are available for selected station
     available_parameters <- reactive({
-      req(input$hydro_station_name, station_data_types)
+      req(input$hydro_station_number, stations_within_basin)
 
-      # Check if the station exists in station_data_types
-      if(!input$hydro_station_number %in% station_data_types$STATION_NUMBER) {
-        return(character(0))  # Return empty character vector if station not found
+      if(is.null(input$hydro_station_number) || input$hydro_station_number == "") {
+        return(character(0))
       }
 
-      station_data <- station_data_types[station_data_types$STATION_NUMBER == input$hydro_station_number, ]
+      if(!input$hydro_station_number %in% stations_within_basin$STATION_NUMBER) {
+        return(character(0))
+      }
+
+      station_data <- stations_within_basin %>%
+        st_drop_geometry() %>%
+        filter(STATION_NUMBER == input$hydro_station_number) %>%
+        slice(1)
+
       params <- c()
-      if(station_data$has_flow) params <- c(params, "Flow")
-      if(station_data$has_level) params <- c(params, "Level")
+      if(!is.na(station_data$has_flow) && station_data$has_flow) params <- c(params, "Flow")
+      if(!is.na(station_data$has_level) && station_data$has_level) params <- c(params, "Level")
       params
     })
 
-    # Update parameter choices based on available parameters
+
+    # initialize stn info w all stns
     observe({
-      req(input$hydro_station_number, available_parameters())
-      params <- available_parameters()
-
-      # Only update if we have parameters
-      if(length(params) > 0) {
-        updateSelectInput(session, "hydro_parameter",
-                          choices = setNames(params, params),
-                          selected = params[1])
-      }
-    })
-
-
-    # MA added May 20, 2025 (post-repub) ^ in place fo above
-    # Update station information and dropdowns
-    observe({
-      stations <- hy_stations(hydat_path = hydat_path) %>%
-        dplyr::filter(HYD_STATUS == "ACTIVE")
-
-      # MA added Jul 2025 - post new hydat.sqlite3 file
-
-      # Load and filter hydrometric station data
-      mackenzie_basin <- load_github_rdsshp("MackenzieRiverBasin_FDA.rds")
-
-      # Load and filter hydrometric station data
-      stations_within_basin <- tidyhydat::hy_stations(hydat_path = "data/Hydat.sqlite3") %>%
-        dplyr::filter(HYD_STATUS == "ACTIVE")
-      #
-      #     # Convert stations to an sf object
-      stations_within_basin <- stations_within_basin %>%
-        st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)
-
-      # Convert back to regular dataframe for dropdowns
       stations <- stations_within_basin %>%
         st_drop_geometry() %>%
         as.data.frame()
 
-      # end of MA added Jul 2025 - post new hydat.sqlite3 file
-      # Store station information
       station_info(stations)
-
-      # Update station name dropdown
-      updateSelectInput(session, "hydro_station_name",
-                        choices = setNames(stations$STATION_NAME,
-                                           stations$STATION_NAME))
-
-      # Update station number dropdown
-      updateSelectInput(session, "hydro_station_number",
-                        choices = setNames(stations$STATION_NUMBER,
-                                           stations$STATION_NUMBER))
     })
+
+
+    # Update parameter choices when station changes, preserving current selection if valid
+    observeEvent(input$hydro_station_number, {
+      req(input$hydro_station_number)
+
+      params <- available_parameters()
+
+      if(length(params) > 0) {
+        # Get current parameter value BEFORE any updates
+        current_param <- input$hydro_parameter
+
+        # Check if current parameter is valid for this station
+        if(!is.null(current_param) &&
+           current_param != "" &&
+           current_param %in% params) {
+          # Current parameter is valid - keep it
+          updateSelectInput(session, "hydro_parameter",
+                            choices = setNames(params, params),
+                            selected = current_param)
+        } else {
+          # Current parameter is not valid - set to first available
+          updateSelectInput(session, "hydro_parameter",
+                            choices = setNames(params, params),
+                            selected = params[1])
+        }
+      } else {
+        # No parameters available - clear selection
+        updateSelectInput(session, "hydro_parameter",
+                          choices = c("Flow", "Level"),
+                          selected = character(0))
+      }
+    }, ignoreInit = TRUE, priority = 1)
 
     # Update station number when name is selected
     observeEvent(input$hydro_station_name, {
       req(input$hydro_station_name)
       station_number <- station_info()$STATION_NUMBER[station_info()$STATION_NAME == input$hydro_station_name]
       updateSelectInput(session, "hydro_station_number", selected = station_number)
-    })
+    }, priority = 2)
 
     # Update station name when number is selected
     observeEvent(input$hydro_station_number, {
       req(input$hydro_station_number)
       station_name <- station_info()$STATION_NAME[station_info()$STATION_NUMBER == input$hydro_station_number]
       updateSelectInput(session, "hydro_station_name", selected = station_name)
+    }, priority = 2)
+
+
+    # Render download controls
+    output$download_controls <- renderUI({
+      req(station_info())
+
+      # Get filtered stations based on parameter (or all if no parameter selected)
+      # stations_to_show <- if(!is.null(input$hydro_parameter) && input$hydro_parameter != "") {
+      #   filtered_stations()
+      # } else {
+      #   station_info()
+      # }
+
+      tagList(
+        tags$div(
+          style = "margin-bottom: 14px;",
+          HTML("<h2 style='font-size: 22px; font-weight: bold; margin-bottom: 20px; margin-top: 0; padding: 0; color: #000000;'>Download Hydrometric Data</h2>
+               Search for a station by typing the full or partial station name, or select by station number. Select your parameter and year. Click the 'Download Data' button to download a CSV file containing all hydrometric measurements from the selected station and year.<br/>")
+        ),
+
+        # Inputs as grid
+        tags$div(
+          style = "display: grid; grid-template-columns: 160px 1fr; row-gap: 12px; align-items: center;",
+
+          # Station Name (row 1)
+          tags$div(
+            style = "grid-column: 1;",
+            tags$strong("Select Station by Name")
+          ),
+          tags$div(
+            style = "grid-column: 2;",
+            selectizeInput(
+              session$ns("hydro_station_name"),
+              label = NULL,
+              choices = setNames(station_info()$STATION_NAME, station_info()$STATION_NAME),
+              selected = character(0),
+              options = list(
+                placeholder = "Enter Full or Partial Station Name",
+                maxItems = 1,
+                create = FALSE,
+                dropdownParent = 'body',
+                selectOnTab = FALSE,
+                onInitialize = I("function() { this.setValue(''); }")
+              )
+            )
+          ),
+
+          # Station Number (row 2)
+          tags$div(
+            style = "grid-column: 1;",
+            tags$strong("Select Station by Number")
+          ),
+          tags$div(
+            style = "grid-column: 2;",
+            selectInput(
+              session$ns("hydro_station_number"),
+              label = NULL,
+              choices = setNames(station_info()$STATION_NUMBER, station_info()$STATION_NUMBER),
+              selected = character(0),
+              width = "100%"
+            )
+          ),
+
+          # Parameter (row 3)
+          tags$div(
+            style = "grid-column: 1;",
+            tags$strong("Select Parameter")
+          ),
+          tags$div(
+            style = "grid-column: 2;",
+            selectInput(
+              session$ns("hydro_parameter"),
+              label = NULL,
+              choices = c("Flow", "Level"),
+              selected = character(0),
+              width = "100%"
+            )
+          ),
+
+          # Year (row 4)
+          tags$div(
+            style = "grid-column: 1;",
+            tags$strong("Select Year")
+          ),
+          tags$div(
+            style = "grid-column: 2;",
+            selectInput(
+              session$ns("hydro_year"),
+              label = NULL,
+              choices = all_years(),
+              selected = character(0),
+              width = "100%"
+            )
+          )
+        ),
+
+        # Download button
+        tags$div(
+          style = "display: flex; justify-content: flex-end; margin-top: 16px;",
+          downloadButton(session$ns("download_hydro"), "Download Data")
+        ),
+        tags$div(style="height: 8px;")
+      )
     })
 
 
@@ -188,31 +325,32 @@ downloadServer <- function(id, first_visits, station_data_types) {
               )
       },
       content = function(file) {
-        # MA added May 23, 2025 - check for param selection based on stn
-        # Check if parameter is available before attempting download
-        # if(!input$hydro_parameter %in% available_parameters()) {
-        #   showNotification("This station does not measure the selected parameter.",
-        #                    type = "error")
-        #   return()
-        # }
-        # Process data using the hydro_daily_download function
+        # Validate inputs before download
+        req(input$hydro_station_number)
+        req(input$hydro_parameter)
+        req(input$hydro_year)
+
+        # Double-check the parameter is available for this station
+        station_data <- stations_within_basin %>%
+          st_drop_geometry() %>%
+          filter(STATION_NUMBER == input$hydro_station_number) %>%
+          slice(1)
+
+        # Verify parameter is available
+        if(input$hydro_parameter == "Flow" && (!station_data$has_flow || is.na(station_data$has_flow))) {
+          showNotification("This station does not measure Flow.", type = "error")
+          return()
+        }
+        if(input$hydro_parameter == "Level" && (!station_data$has_level || is.na(station_data$has_level))) {
+          showNotification("This station does not measure Level.", type = "error")
+          return()
+        }
+
         daily_stats <- hydro_daily_download(
           station_name = input$hydro_station_name,
           parameter = input$hydro_parameter,
           selected_year = input$hydro_year
         )
-
-        # write.table(
-        #   x = daily_stats,
-        #   file = file,
-        #   sep = ",",
-        #   row.names = FALSE,
-        #   #col.names = TRUE,
-        #   na = "",
-        #   fileEncoding = "UTF-8",
-        #   quote = TRUE
-        # )
-
         write.csv(
           x = daily_stats,
           file = file,
@@ -227,3 +365,6 @@ downloadServer <- function(id, first_visits, station_data_types) {
   })
 }
 
+##
+##
+##

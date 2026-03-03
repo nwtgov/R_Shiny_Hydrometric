@@ -213,4 +213,13 @@ load_github_rdsshp <- function(filename) {
   data
 }
 
+load_github_realtime <- function(filename) {
+  github_url <- paste0("https://raw.githubusercontent.com/M-Auclair/Update_realtime_data/main/data/", filename)
+  temp_file <- tempfile(fileext = ".rds")
+  download.file(github_url, temp_file, mode = "wb", quiet=TRUE)
+  data <- readRDS(temp_file)
+  unlink(temp_file)
+  data
+}
+
 

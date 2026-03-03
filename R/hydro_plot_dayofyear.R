@@ -29,7 +29,7 @@ hydro_plot_dayofyear <- function(
   legend_position = "top",
   line_size = 0.5,
   point_size = 0,
-  legend_text_size = 8,
+  legend_text_size = 10,
   y_min = NA,
   y_max = NA,
   save = FALSE,
@@ -88,7 +88,11 @@ hydro_plot_dayofyear <- function(
     ggplot2::scale_x_date(date_breaks = "1 months",
                           labels = scales::date_format("%b")) +
     ggplot2::theme(legend.position = legend_position,
-                   legend.text = ggplot2::element_text(size = legend_text_size)) +
+                   legend.text = ggplot2::element_text(size = legend_text_size),
+                   axis.title.x = ggplot2::element_text(size = legend_text_size),
+                   axis.title.y = ggplot2::element_text(size = legend_text_size),
+                   axis.text.x = ggplot2::element_text(size = legend_text_size),
+                   axis.text.y = ggplot2::element_text(size = legend_text_size)) +
     ggplot2::scale_colour_manual(name = "",
                                  values = line_colours,
                                  na.translate = FALSE) # eliminates 'NA' from legend
@@ -144,12 +148,12 @@ hydro_plot_dayofyear <- function(
 }
 
 # hydro_plot_dayofyear(
-#     station_number = "07NB001",
-#     parameter = "flow",
-#     select_years = c(2025),
+#     station_number = "07OB002",
+#     parameter = "level",
+#     select_years = c(2025, 2024),
 #     after_bennett = TRUE,
 #     historic_min = NA,
-#     historic_max = 2022,
+#     historic_max = 2023,
 #     water_year_start = 1,
 #     historic = TRUE,
 #     log_scale = FALSE,
@@ -166,7 +170,7 @@ hydro_plot_dayofyear <- function(
 #     legend_position = "top",
 #     line_size = 0.5,
 #     point_size = 0,
-#     legend_text_size = 8,
+#     legend_text_size = 10,
 #     y_min = NA,
 #     y_max = NA,
 #     save = FALSE,
