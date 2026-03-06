@@ -126,19 +126,6 @@ ui <- fluidPage(
   font-weight: bold !important;
   padding: 6px 10px !important;
 }
-        .floating-panel {
-          background-color: white;
-          padding: 20px;
-          border-radius: 5px;
-          box-shadow:
-              0 0 0 rgba(0,0,0,0),
-              0 2px 15px rgba(0,0,0,0.2),
-              2px 0 15px rgba(0,0,0,0.1),
-              -2px 0 15px rgba(0,0,0,0.1);
-          max-width: 300px;
-          z-index: 2;
-          font-size: 15px; !important;
-        }
                 .contact-bar {
           position: fixed;
           bottom: 0;
@@ -360,7 +347,7 @@ server <- function(input, output, session) {
           if(language() == "fr") {
             "Explorateur des données hydrométriques – TNO"
           } else {
-            "Northwest Territories Water Level and Flow Data Explorer"
+            "NWT Water Level and Flow Data Explorer"
           },
           class = "navbar-title-text",
           style = "font-size: 24px; margin-left: 35px; margin-right: 35px;"
@@ -382,7 +369,7 @@ server <- function(input, output, session) {
         aboutUI("about")
       ),
       tabPanel(
-        if(language() == "fr") "Données Hydrométriques" else "Hydrometric Data",
+        if(language() == "fr") "Données Hydrométriques" else "Water Level Data",
         summaryUI("summary")
       ),
       tabPanel(

@@ -1,7 +1,7 @@
 ﻿category,question_en,answer_en,question_fr,answer_fr
 data,How do I download water level and flow data?,"<p>1. Go to the Download Data tab </p>
-<p>2. Select a station by typing its name  or station number in the 'select station' boxes, or scrolling through the stations in the drop-down lists </p>
-<p>3. Select the parameter you want ('Flow' or 'Level') </p>
+<p> 2. Navigate to the box based on the parameter ('Flow' or 'Water Level') you want to download </p>
+<p>3. Select a station by typing its name  or station number in the 'select station' boxes, or scrolling through the stations in the drop-down lists </p>
 <p>4. Select the year range you want by inputting a start year and end year in the 'For years from' boxes </p>
 <p>5. Click the 'Download Data' button to download the data as a CSV file. This file is automatically downloaded to your computer. For Apple users, you may have to enable downloads for this website. </p>",,
 data,Why can't I download the full date range I selected?,"The available year range automatically updates based on the selected station. This reflects the first and last years with recorded data. Note that this does not guarantee data exist for every year within that range as some stations may have gaps due to equipment failure, ice damage, seasonal operation, or funding changes.",,
@@ -9,8 +9,8 @@ data,"Where can I find additional information to help interpret the columns, and
 data,"What station information is available, and where can I find it?","Station metadata, including station number, name, latitude, longitude, drainage area,operating schedule, variables measured, and date ranges, are available through the Water Survey of Canada HYDAT database. These metadata are also viewable from the Metadata tab.",,
 data,Where can I download historical daily data?,"Historical daily water level and discharge data for each station are available through the Water Survey of Canada HYDAT database, which is updated annually.
 This Explorer provides summary values and selected data available for download.",,
-data,Where can I read the full data disclaimer and terms of use?,"See the Water Survey of Canada data terms and conditions on the Government of Canada website.
-Additional terms of use specific to this Explorer are provided in the Data Disclaimer section of the Download Data tab.",,
+data,Where can I read the full data disclaimer and terms of use?,"<p>See the <a href='https://wateroffice.ec.gc.ca/disclaimer_info_e.html'>  Water Survey of Canada Disclaimer for Hydrometric Information </a> on the Government of Canada website.</p>
+<p>Additional terms of use specific to this Explorer are provided in the Data Disclaimer section of the Download Data tab.</p>",,
 methods_sites,How is water level measured?,"Water level (stage) is measured continuously at hydrometric stations using a combination of pressure transducers, float-driven sensors, and/or radar-based instruments. These instruments record water level at regular intervals (typically every 5 to 15 minutes) and transmit the data via satellite to the Water Survey of Canada. ",,
 methods_sites,How is discharge (flow) calculated?,"Discharge is not measured directly on a continuous basis. Instead, WSC hydrometric technicians make periodic manual discharge measurements using current meters or Acoustic Doppler Current Profilers (ADCPs). These measurements are used to develop a stage-discharge relationship (rating curve) for each station. Continuous discharge values are then derived by applying the rating curve to the continuously recorded water level data. In northern rivers, ice formation significantly alters the stage-discharge relationship, requiring special methods to estimate winter discharge. In general, winter water level readings are more reliable than winter discharge readings.",,
 methods_sites,How often are stations visited?,"WSC hydrometric stations in the NWT are typically visited several times per year for maintenance and discharge measurements. The frequency depends on the station's priority, accessibility, and the complexity of its hydrological conditions. Remote stations may rely more heavily on satellite telemetry between visits. Many stations are operated seasonally (open water only) due to the challenges and costs of winter monitoring in northern environments.",,
@@ -49,6 +49,6 @@ National Water Data Archive: HYDAT</a> ). </p>
 </ul>
 <p>Real-time data are available via the Water Survey of Canada website (Water Level and Flow - Environment Canada).</p>",,
 other,What is the purpose of this Data Explorer?,"This Explorer is a visual and interactive tool for exploring water level and flow data from the NWT hydrometric network, operated by the Water Survey of Canada and managed in partnership with the GNWT. It allows users to explore, visualize, and download hydrometric data from stations across the NWT. The Explorer is intended to support public access to water data and complement the official WSC data holdings. ",,
-other,What is the recommended citation for this Explorer?,"TBD – The recommended citation format for this Explorer will be provided once the official website URL is available.
-<ul> NWT Hydrometric Data Explorer (Version {{VERSION}})  [Shiny app]. Environment and Climate Change; Government of Northwest Territories. URL</ul>",,
+other,What is the recommended citation for the downloaded data?,"The data presented in this app are provided through the  <a href='https://wateroffice.ec.gc.ca/mainmenu/real_time_data_index_e.html'> 
+Water Survey of Canada </a> website. Refer to their website for the recommended citation.",,
 other,Who should I contact for more information?,"Contact NWTHydrology-HydrologieTNO@gov.nt.ca"" for additional information or inquiries",,

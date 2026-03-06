@@ -326,7 +326,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
         # Return empty map if no data
         return(leaflet() %>%
                  addTiles() %>%
-                 setView(lng = -123, lat = 63.7, zoom = 4.5))
+                 setView(lng = -123, lat = 63.7, zoom = 4))
       }
 
       # Get coordinates
@@ -336,7 +336,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
         cat("ERROR: coords is NULL or empty\n")
         return(leaflet() %>%
                  addTiles() %>%
-                 setView(lng = -123, lat = 63.7, zoom = 4.5))
+                 setView(lng = -123, lat = 63.7, zoom = 4))
       }
 
       # Check if pal is valid
@@ -344,7 +344,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
         cat("ERROR: pal is NULL\n")
         return(leaflet() %>%
                  addTiles() %>%
-                 setView(lng = -123, lat = 63.7, zoom = 4.5))
+                 setView(lng = -123, lat = 63.7, zoom = 4))
       }
 
       # format record length w singular/plural
@@ -374,7 +374,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
       leaflet() %>%
         addTiles() %>%
-        setView(lng = -123, lat = 63.7, zoom = 4.5) %>%
+        setView(lng = -123, lat = 63.7, zoom = 4) %>%
         addProviderTiles(providers$CartoDB.Positron, group = map_text()$base_maps$cartodb) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = map_text()$base_maps$esri) %>%
         addPolylines(data = nwt_boundary, weight = 2, color = "#000000", opacity = 0.8,
@@ -396,7 +396,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
         addCircleMarkers(
           lng = coords[, 1],
           lat = coords[, 2],
-          radius = ifelse(is.na(context_data$Current_Level) | context_data$Historical_Context == "NA", 6, 7),
+          radius = ifelse(is.na(context_data$Current_Level) | context_data$Historical_Context == "NA", 4, 5),
           color = "black",
           fillColor = pal(context_data$Historical_Context),
           weight = 1,

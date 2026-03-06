@@ -125,7 +125,8 @@ create_hydro_column_modal_content <- function(lang) {
                                               tags$tr(tags$td("P50"), tags$td("50th percentile for this DOY (half of historical values were higher and half were lower)")),
                                               tags$tr(tags$td("P25"), tags$td("25th percentile for this DOY (75% of historical values were higher)")),
                                               tags$tr(tags$td("P10"), tags$td("10th percentile for this DOY (90% of historical values were higher)")),
-                                              tags$tr(tags$td("P05"), tags$td("5th percentile for this DOY (95% of historical values were higher)"))
+                                              tags$tr(tags$td("P05"), tags$td("5th percentile for this DOY (95% of historical values were higher)")),
+                                              tags$tr(tags$td("Latitude / Longitude"), tags$td("Geographical coordinates of the station in decimal degrees")),
                                             )
                                  )
                         )

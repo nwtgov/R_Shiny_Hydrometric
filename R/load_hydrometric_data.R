@@ -29,7 +29,7 @@ stations_within_basin <- stations_within_basin %>%
   sf::st_as_sf(coords = c("LONGITUDE", "LATITUDE"), crs = 4326)
 
 # load station data ranges
-station_data_ranges <- readRDS("data/MRB_stns_data_ranges_all.rds")
+station_data_ranges <- readRDS("data/NT_MRB_stns_data_ranges_all.rds")
 
 # Filter stations_within_basin to only include stations that have data ranges (ie., those that meas flow and level)
 # This ensures we show all 679 stations with data, not just the 706 in basin
@@ -79,7 +79,7 @@ stations_within_basin <- stations_within_basin %>%
 # stations_within_basin <- stations_within_basin %>%
 #   dplyr::left_join(station_data_ranges, by = "STATION_NUMBER")
 
-master_hist_WL <- readRDS("data/Master_hist_MRB_WL_all.rds")
+master_hist_WL <- readRDS("data/Master_hist_WL.rds")
 
 # Get real-time data for all stations - from GitHub repo that updates at 8am MT each day
 realtime_data <- load_github_realtime("realtime_WL_data.rds")
