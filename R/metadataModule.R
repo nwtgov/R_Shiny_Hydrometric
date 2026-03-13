@@ -532,27 +532,36 @@ metadataServer <- function(id, preloaded_data) {
         )
     })
 
+    # track if sub-basins have been hidden
+    sub_basins_hidden <- reactiveVal(FALSE)
 
-    # sub-basins toggled off by default
-    observe({
-      # Trigger when map is ready OR when year changes (map re-renders)
-      req(map_text())
-      # isolate (to prevent infinite loops)
-      isolate({
-        map_text <- map_text()
-        # Small delay to ensure map is fully rendered
-        Sys.sleep(0.1)
-        leafletProxy(session$ns("metadata_map"), session) %>%
-          hideGroup(c(
-            map_text()$basins$slave,
-            map_text()$basins$snare,
-            map_text()$basins$YKriver,
-            map_text()$basins$liard,
-            map_text()$basins$peel,
-            map_text()$basins$hay
-          ))
-      })
-    })
+    # hide sub-basins when map is first rendered
+    observeEvent(input$metadata_map_zoom, {
+      if (!sub_basins_hidden()) {
+        req(map_text())
+
+        isolate({
+          map_text_val <- map_text()
+
+          tryCatch({
+            leafletProxy(session$ns("metadata_map"), session) %>%
+              hideGroup(c(
+                map_text_val$basins$slave,
+                map_text_val$basins$snare,
+                map_text_val$basins$YKriver,
+                map_text_val$basins$liard,
+                map_text_val$basins$peel,
+                map_text_val$basins$hay
+              ))
+            sub_basins_hidden(TRUE)
+          }, error = function(e) {
+
+          })
+        })
+      }
+    }, once = TRUE)
+
+
   })
 }
 

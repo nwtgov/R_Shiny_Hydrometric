@@ -29,10 +29,8 @@ source("R/downloadModule.R")
 source("R/aboutModule.R")
 source("R/faqModule.R")
 
-
 # Add timeout of 10 min to reduce usage time (default is 15 minutes)
 #shinyOptions(timeout = 600) # note timeout is in seconds
-
 
 # Main UI with navigation bar
 ui <- fluidPage(

@@ -151,7 +151,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             esri = "Carte Satellite"
           ),
           legend = list(
-            title = paste0("Water levels summary")
+            title = paste0("Niveaux d'eau en temps réel")
           ),
           popup = list(
             station_name = "Nom de la station",
@@ -160,7 +160,8 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             historical_context = "Contexte",
             percentile_range = "Plage de percentiles",
             historical_mean = "Moyenne historique",
-            record_length = "Longueur d'enregistrement"
+            record_length = "Longueur d'enregistrement",
+            drainage_area = "Superficie du bassin versant"
           )
         )
       } else {
@@ -186,7 +187,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             esri = "Satellite Map"
           ),
           legend = list(
-            title = paste0("Water levels summary")
+            title = paste0("Current water levels")
           ),
           popup = list(
             station_name = "Station Name",
@@ -195,7 +196,8 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             historical_context = "Context",
             percentile_range = "Percentile range",
             historical_mean = "Historical average",
-            record_length = "Record length"
+            record_length = "Record length",
+            drainage_area = "Drainage Area"
           )
         )
       }
@@ -368,10 +370,10 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
         ifelse(!is.na(context_data$hist_mean),
                paste0("<tr><td>", map_text()$popup$historical_mean, ":</td><td>",round(context_data$hist_mean, 2), " m</td></tr>"), ""),
         "<tr><td>", map_text()$popup$record_length, ":</td><td>",format_record_length(context_data$valid_years), "</td></tr>",
+        "<tr><td>", map_text()$popup$drainage_area, ":</td><td>",ifelse(is.na(context_data$DRAINAGE_AREA_GROSS), "N/A", paste0(context_data$DRAINAGE_AREA_GROSS, " km²")), "</td></tr>",
         "</table>",
         "</div>"
       )
-
       leaflet() %>%
         addTiles() %>%
         setView(lng = -123, lat = 63.7, zoom = 4) %>%
@@ -460,27 +462,34 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
     ")
     })
 
-    # Sub-basins toggled off by default
-    observe({
-      req(stations_with_context())
+    # track if sub-basins have been hidden
+    sub_basins_hidden <- reactiveVal(FALSE)
 
-      isolate({
-        map_text <- map_text()
+    # hide sub-basins when map is first rendered
+    observeEvent(input$summary_map_zoom, {
+      if (!sub_basins_hidden()) {
+        req(map_text())
 
-        # Small delay to ensure map is fully rendered
-        Sys.sleep(0.1)
+        isolate({
+          map_text_val <- map_text()
 
-        leafletProxy(session$ns("summary_map"), session) %>%
-          hideGroup(c(
-            map_text()$basins$slave,
-            map_text()$basins$snare,
-            map_text()$basins$YKriver,
-            map_text()$basins$liard,
-            map_text()$basins$peel,
-            map_text()$basins$hay
-          ))
-      })
-    })
+          tryCatch({
+            leafletProxy(session$ns("summary_map"), session) %>%
+              hideGroup(c(
+                map_text_val$basins$slave,
+                map_text_val$basins$snare,
+                map_text_val$basins$YKriver,
+                map_text_val$basins$liard,
+                map_text_val$basins$peel,
+                map_text_val$basins$hay
+              ))
+            sub_basins_hidden(TRUE)
+          }, error = function(e) {
+
+          })
+        })
+      }
+    }, once = TRUE)
   })
 }
 
