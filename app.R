@@ -230,11 +230,297 @@ ui <- fluidPage(
     color: #0066cc;
   }
 
+  /* ===== Mobile side panel ===== */
+  .mobile-hamburger {
+    display: none;
+    position: fixed;
+    top: 8px;
+    right: 12px;
+    z-index: 10010;
+    background: #0066cc;
+    border: none;
+    color: #ffffff;
+    font-size: 28px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .mobile-side-panel {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: -280px;
+    width: 280px;
+    height: 100%;
+    background-color: #ffffff;
+    z-index: 10020;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.25);
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    padding: 0;
+  }
+  .mobile-side-panel.open {
+    right: 0;
+  }
+  .side-panel-header {
+    background-color: #0066cc;
+    color: #ffffff;
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .side-panel-close {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .side-panel-title {
+    padding: 16px 20px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #2699D5;
+  }
+  .side-panel-nav a {
+    display: block;
+    padding: 14px 20px;
+    color: #333;
+    text-decoration: none;
+    font-size: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  .side-panel-nav a:hover,
+  .side-panel-nav a.active-link {
+    background-color: #f0f7ff;
+    color: #0066cc;
+    font-weight: bold;
+  }
+  .side-panel-footer {
+    padding: 16px 20px;
+    border-top: 2px solid #2699D5;
+    font-size: 13px;
+    color: #666;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+  }
+  .side-panel-footer .side-contact {
+    color: #0066cc;
+    font-weight: bold;
+    font-size: 12px;
+    margin-top: 8px;
+    word-wrap: break-word;
+  }
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 10015;
+  }
+  .mobile-overlay.open {
+    display: block;
+  }
+
+  /* ===== Mobile media query ===== */
+  @media (max-width: 768px) {
+    .mobile-hamburger {
+      display: block !important;
+    }
+    .mobile-side-panel {
+      display: block;
+    }
+    /* Hide desktop navbar tabs and language toggle */
+    .navbar-nav {
+      display: none !important;
+    }
+    .language-toggle-container {
+      display: none !important;
+    }
+    /* Hide desktop bottom bar on mobile */
+    .contact-bar {
+      display: none !important;
+    }
+    /* Simplify navbar for mobile */
+    .navbar {
+      height: 45px !important;
+    }
+    .navbar-brand {
+      height: 45px !important;
+    }
+    .navbar-title-text {
+      font-size: 16px !important;
+      margin-left: 10px !important;
+      margin-right: 10px !important;
+    }
+    .navbar-brand img {
+      height: 28px;
+    }
+    body::after {
+      top: 45px !important;
+      height: 6px !important;
+    }
+    /* Adjust map for mobile header */
+    #map, #summary-summary_map {
+      top: 45px !important;
+      bottom: 0 !important;
+      height: calc(100vh - 50px) !important;
+    }
+    /* Download form: stack labels above inputs on mobile */
+    .download-container {
+      padding: 10px !important;
+    }
+    .download-controls-section {
+      padding: 12px !important;
+    }
+    .download-controls-section div[style*='grid-template-columns'] {
+      display: block !important;
+    }
+    .download-controls-section div[style*='grid-column'] {
+      margin-bottom: 6px;
+    }
+    .download-controls-section div[style*='flex'] {
+      display: block !important;
+    }
+    .download-controls-section div[style*='flex'] > div {
+      width: 100% !important;
+      flex: none !important;
+      margin-bottom: 6px;
+    }
+    .download-controls-section .selectize-input,
+    .download-controls-section .form-control {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    /* Metadata floating panel: fit mobile */
+    .floating-panel {
+      max-width: 170px !important;
+      font-size: 13px !important;
+      padding: 10px !important;
+      top: 55px !important;
+      left: 8px !important;
+    }
+    #metadata-metadata_filter {
+      width: 160px !important;
+      max-width: 160px !important;
+      min-width: 160px !important;
+      top: 55px !important;
+      left: 8px !important;
+    }
+    /* Metadata map: adjust for mobile header */
+    #metadata-metadata_map {
+      top: 45px !important;
+      bottom: 0 !important;
+      height: calc(100vh - 50px) !important;
+    }
+    /* Hide navbar title on mobile (it's in the side panel instead) */
+    .navbar-title-text {
+      display: none !important;
+    }
+    /* FAQ: reduce side padding on mobile */
+    .faq-container {
+      padding: 8px !important;
+      max-width: 100% !important;
+    }
+    .faq-section {
+      padding: 10px !important;
+    }
+    /* Hide hover tooltips on mobile (can't hover on touch) */
+    .leaflet-tooltip {
+      display: none !important;
+    }
+    /* Metadata popup: smaller text on mobile */
+    .metadata-popup .leaflet-popup-content-wrapper {
+      min-width: unset !important;
+      max-width: 90vw !important;
+    }
+    .metadata-popup .leaflet-popup-content {
+      font-size: 13px !important;
+      margin: 8px 10px !important;
+    }
+    .metadata-popup .metadata-table td {
+      font-size: 12px !important;
+      padding: 4px 6px 4px 0 !important;
+    }
+    .metadata-popup .metadata-header {
+      font-size: 14px !important;
+    }
+    /* Summary popup: smaller text on mobile */
+    .leaflet-popup-content-wrapper {
+      max-width: 90vw !important;
+    }
+    .leaflet-popup-content {
+      font-size: 13px !important;
+    }
+  }
+
       "))
   ),
 
-  uiOutput("dynamic_navbar"), # NEW - rendering navbar dynamically like snow app
-  uiOutput("dynamic_contact_bar")
+  # Hamburger button for mobile
+  tags$button(
+    class = "mobile-hamburger",
+    id = "mobile_menu_toggle",
+    onclick = "toggleMobileMenu()",
+    HTML("&#9776;")
+  ),
+
+  # Mobile overlay
+  div(class = "mobile-overlay", id = "mobile_overlay",
+      onclick = "toggleMobileMenu()"),
+
+  # Mobile side panel (populated dynamically)
+  uiOutput("mobile_side_panel"),
+
+  uiOutput("dynamic_navbar"),
+  uiOutput("dynamic_contact_bar"),
+
+  # JavaScript for mobile menu
+  tags$script(HTML("
+    function toggleMobileMenu() {
+      var panel = document.getElementById('side_panel');
+      var overlay = document.getElementById('mobile_overlay');
+      if (panel && overlay) {
+        panel.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
+    }
+    function mobileSwitchTab(tabValue) {
+      // Click the corresponding tab in the hidden navbar
+      var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
+      if (tabLink.length > 0) {
+        tabLink.click();
+      }
+      // Update active state in side panel
+      $('.side-panel-nav a').removeClass('active-link');
+      $('.side-panel-nav a[data-tab=\"' + tabValue + '\"]').addClass('active-link');
+      // Close menu
+      toggleMobileMenu();
+    }
+    // Invalidate Leaflet map sizes when tabs become visible (fixes disappearing markers)
+    $(document).on('shown.bs.tab', 'a[data-toggle=\"tab\"]', function(e) {
+      setTimeout(function() {
+        $(window).trigger('resize');
+        $('.leaflet-container').each(function() {
+          var map = $(this).data('leaflet-map') || HTMLWidgets.find('#' + this.id);
+          if (map && map.getMap) {
+            map.getMap().invalidateSize();
+          }
+        });
+      }, 200);
+    });
+  "))
 )
 
 # Basic server structure
@@ -382,6 +668,72 @@ server <- function(input, output, session) {
         if(language() == "fr") "FAQ" else "FAQ",
         faqUI("faq")
       )
+    )
+  })
+
+  # Render mobile side panel
+  output$mobile_side_panel <- renderUI({
+    req(language())
+    lang <- language()
+
+    tab_names <- if(lang == "fr") {
+      list(
+        c("À propos", "À propos"),
+        c("Données Hydrométriques", "Données Hydrométriques"),
+        c("Télécharger", "Télécharger"),
+        c("Métadonnées", "Métadonnées"),
+        c("FAQ", "FAQ")
+      )
+    } else {
+      list(
+        c("About", "About"),
+        c("Water Level Data", "Water Level Data"),
+        c("Download Data", "Download Data"),
+        c("Metadata", "Metadata"),
+        c("FAQ", "FAQ")
+      )
+    }
+
+    app_title <- if(lang == "fr") {
+      "Explorateur des données hydrométriques – TNO"
+    } else {
+      "NWT Water Level and Flow Data Explorer"
+    }
+
+    lang_label <- if(lang == "fr") "English" else "Français"
+    contact_text <- if(lang == "fr") {
+      "NWTHydrology-HydrologieTNO@gov.nt.ca"
+    } else {
+      "NWTHydrology-HydrologieTNO@gov.nt.ca"
+    }
+
+    div(class = "mobile-side-panel", id = "side_panel",
+        div(class = "side-panel-header",
+            span(if(lang == "fr") "Menu" else "Menu"),
+            tags$button(class = "side-panel-close", onclick = "toggleMobileMenu()",
+                        HTML("&times;"))
+        ),
+        div(class = "side-panel-title", app_title),
+        div(class = "side-panel-nav",
+            lapply(tab_names, function(tab) {
+              tags$a(
+                href = "javascript:void(0)",
+                `data-tab` = tab[1],
+                onclick = sprintf("mobileSwitchTab('%s')", gsub("'", "\\\\'", tab[1])),
+                tab[2]
+              )
+            }),
+            tags$a(
+              href = "javascript:void(0)",
+              onclick = "Shiny.setInputValue('toggle_language', Math.random()); toggleMobileMenu();",
+              style = "color: #0066cc; font-weight: bold;",
+              lang_label
+            )
+        ),
+        div(class = "side-panel-footer",
+            div(paste0("Version ", app_version)),
+            div(class = "side-contact", contact_text)
+        )
     )
   })
 

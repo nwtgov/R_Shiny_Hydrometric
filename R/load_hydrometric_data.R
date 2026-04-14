@@ -68,14 +68,6 @@ stations_within_basin <- stations_within_basin %>%
     )
   )
 
-
-
-
-
-
-
-
-
 # stations_within_basin <- stations_within_basin %>%
 #   dplyr::left_join(station_data_ranges, by = "STATION_NUMBER")
 

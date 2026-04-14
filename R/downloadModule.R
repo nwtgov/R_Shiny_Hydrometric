@@ -228,11 +228,11 @@ downloadServer <- function(id, first_visits, language) {
           style = "margin-bottom: 14px;",
           HTML(
             if(language() == "fr") {
-              "<h2 style='font-size: 22px; font-weight: bold; margin-bottom: 20px; margin-top: 0; padding: 0; color: #000000;'>Télécharger des données hydrométriques</h2>
-               Naviguez vers la section pour le type de données que vous souhaitez télécharger (Débit ou Niveau d'eau). Recherchez une station en tapant le nom complet ou partiel de la station, ou sélectionnez par numéro de station. Sélectionnez votre plage de dates. Cliquez sur le bouton « Télécharger les données » pour télécharger un fichier CSV contenant toutes les données de la station et des années sélectionnées.<br/>"
+              "<h2 style='font-size: 22px; font-weight: bold; margin-bottom: 20px; margin-top: 0; padding: 0; color: #000000;'>Télécharger les données de niveau d'eau et de débit</h2>
+               Recherchez une station en tapant le nom complet ou partiel de la station ou son numéro. Sélectionnez votre plage de dates et cliquez sur « Télécharger les données ».<br/>"
             } else {
-              "<h2 style='font-size: 22px; font-weight: bold; margin-bottom: 20px; margin-top: 0; padding: 0; color: #000000;'>Download Hydrometric Data</h2>
-               Navigate to the section for the type of data you want to download (Flow or Water Level). Search for a station by typing the full or partial station name, or select by station number. Select your date range. Click the 'Download Data' button to download a CSV file containing all data from the selected station and year(s).<br/>"
+              "<h2 style='font-size: 22px; font-weight: bold; margin-bottom: 20px; margin-top: 0; padding: 0; color: #000000;'>Download Water Level and Flow Data</h2>
+               Search for a station by typing the full or partial station name or number. Select your date range and click 'Download Data'.<br/>"
             }
           )
         ),

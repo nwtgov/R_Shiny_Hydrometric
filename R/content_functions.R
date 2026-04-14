@@ -6,24 +6,32 @@ create_disclaimer_content <- function(lang) {
   if(lang == "fr") {
     HTML("
       <h4 style='font-weight: bold; font-size: 18px; margin-bottom: 10px;'>Avertissement sur les données</h4>
-      <p>Cette Explorateur a été créée par le GTNO–ECC. Elle sert d'outil visuel et interactif pour explorer les données hydrométriques recueillies par le réseau hydrométrique des TNO, exploité par le Relevé hydrologique du Canada (RHC) et géré en partenariat avec le GTNO. L'Explorateur présente des données de niveau d'eau et de débit provenant du RHC, avec un contexte et des résumés supplémentaires fournis par le GTNO–ECC.</p>
-      <p>Cette Explorateur est fournie à titre informatif uniquement. Elle ne contient aucune garantie, représentation ou engagement de qualité, qu'il soit exprimé ou implicite, ni aucune garantie concernant l'exactitude, l'intégrité et la qualité des informations. Les données hydrométriques officielles peuvent également être obtenues directement auprès du Relevé hydrologique du Canada via la base de données HYDAT ou le site Web des données hydrométriques en temps réel du gouvernement du Canada.</p>
-      <p>Pour l'avertissement complet sur les données et les conditions d'utilisation, veuillez consulter les conditions d'utilisation des données du Relevé hydrologique du Canada.</p>
+      <p>Cet Explorateur a été créée par le gouvernement des Territoires du Nord-Ouest–Ministère de l'Environnement et des Changements climatiques (GTNO–ECC). Il sert d'outil visuel et interactif pour explorer les données de niveau d'eau et de débit (données hydrométriques) recueillies par le réseau hydrométrique des Territoires du Nord-Ouest, exploité par le Relevés hydrologiques du Canada (RHC) et géré en partenariat avec le GTNO-ECC. L'Explorateur présente des données de niveau d'eau et de débit provenant du RHC, avec un contexte et des résumés supplémentaires fournis par le GTNO–ECC.</p>
+      <p>Cet Explorateur est fournie à titre informatif uniquement. Il ne contient aucune garantie, représentation ou engagement de qualité, qu'il soit exprimé ou implicite, ni aucune garantie concernant l'exactitude, l'intégrité et la qualité des informations. Les données hydrométriques officielles peuvent également être obtenues directement auprès du RHC par l'intermédiaire de la <a href= 'https://www.canada.ca/fr/environnement-changement-climatique/services/eau-apercu/volume/surveillance/releves/produits-donnees-services/archives-nationales-hydat.html'> base de données HYDAT</a> ou leur <a href= 'https://eau.ec.gc.ca/index_f.html'> site Web des données hydrométriques</a>.</p>
+      <p>Pour l'avertissement complet sur les données et les conditions d'utilisation des données hydrométriques, veuillez consulter l'<a href='https://eau.ec.gc.ca/disclaimer_info_f.html'>avertissement</a> du RHC et les <a href='https://www.canada.ca/fr/transparence/avis.html'>Avis</a>.</p>
           <div style='margin-top: 30px; padding-top: 20px;'>
         <h4 style='font-weight: bold; font-size: 18px;'>Ressources supplémentaires</h4>
         <h5 style='font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 10px;'>Documents de référence rapide</h5>
         <ul>
-          <li><span class='flag-link' id='show_column_names'>Descriptions des noms de colonnes</span> - explication des en-têtes de colonnes inclus dans les données téléchargeables.</li>
-          <li><span class='flag-link' id='show_station_info'>Information des stations</span> - descriptions des champs de métadonnées des stations disponibles dans les données téléchargées.</li>
+          <li><span class='flag-link' id='show_column_names'>Noms de colonnes</span> - explication des en-têtes de colonnes inclus dans les données téléchargeables.</li>
+          <li><span class='flag-link' id='show_station_info'>Information des stations</span> - descriptions des champs de métadonnées des stations.</li>
         </ul>
+      <p style='margin-top: 12px; font-size: 14px;'>Ces documents de référence sont offerts pour une consultation rapide dans cet Explorateur; les données peuvent aussi être téléchargées à partir de la <a href='https://www.canada.ca/en/environment-climate-change/services/water-overview/quantity/monitoring/survey/data-products-services/national-archive-hydat.html' target='_blank'>base de données HYDAT du RHC</a> pour une utilisation hors ligne.</p>
+        <h5 style='font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 10px;'>Autres publications</h5>
+                <h5>Des valeurs résumées, des graphiques et une interprétation figurent dans les Aperçu des niveaux d’eau printaniers et les Bulletins mensuels sur la surveillance des eau publiés par le GTNO–ECC.</h5>
+            <ul>
+              <li> <a href='https://www.gov.nt.ca/ecc/fr/services/gestion-et-suivi-de-leau/apercu-des-niveaux-deau-printaniers' target='_blank'>Aperçu des niveaux d’eau printaniers</a></li>
+              <li> <a href='https://www.gov.nt.ca/ecc/fr/services/releves-nivometriques' target='_blank'>Bulletins sur la surveillance des eau</a></li>
+              <li> <a href='https://www.gov.nt.ca/ecc/en/services/nwt-state-environment-report/11-state-water'> Rapport sur l’état de l’environnement</a> </li>
+            </ul>
       </div>
          ")
   } else {
     HTML("
       <h4 style='font-weight: bold; font-size: 18px; margin-bottom: 10px;'>Data Disclaimer</h4>
-      <p>This Explorer was created by GNWT–ECC. It serves as a visual and interactive tool for exploring hydrometric data collected through the NWT hydrometric network, operated by the Water Survey of Canada (WSC) and managed in partnership with the GNWT. The Explorer features water level and discharge data sourced from WSC, with additional context and summaries provided by GNWT–ECC.</p>
-      <p>This Explorer is provided for informational purposes only. It does not contain any warranties, representations, or quality commitments, whether expressed or implicit, nor does it contain any guarantees regarding the correctness, integrity, and quality of the information. Official hydrometric data can also be obtained directly from the Water Survey of Canada via the HYDAT database or the Government of Canada Real-Time Hydrometric Data website.</p>
-      <p>For the full data disclaimer and terms of use, please refer to the Water Survey of Canada data terms and conditions.</p>
+      <p>This Explorer was created by the Government of the Northwest Territories-Department of Environment and Climate Change (GNWT–ECC). It serves as a visual and interactive tool for exploring water level and flow (hydrometric) data collected through the Northwest Territories Hydrometric Network, operated by the Water Survey of Canada (WSC) and managed in partnership with GNWT-ECC. The Explorer features water level and flow data sourced from WSC, with additional context and summaries provided by GNWT–ECC.</p>
+      <p>This Explorer is provided for informational purposes only. It does not contain any warranties, representations, or quality commitments, whether expressed or implicit, nor does it contain any guarantees regarding the correctness, integrity, and quality of the information. Official hydrometric data can also be obtained directly from the WSC via the <a href='https://www.canada.ca/en/environment-climate-change/services/water-overview/quantity/monitoring/survey/data-products-services/national-archive-hydat.html'> HYDAT database</a> or their <a href='https://wateroffice.ec.gc.ca/'> Water Office website</a>.</p>
+      <p>For the full data disclaimer and terms of use for the hydrometric data, please refer to the WSC <a href='https://wateroffice.ec.gc.ca/disclaimer_info_e.html'> disclaimer</a> and <a href'https://www.canada.ca/en/transparency/terms.html'> data terms and conditions</a>.</p>
           <div style='margin-top: 30px; padding-top: 20px;'>
         <h4 style='font-weight: bold; font-size: 18px;'>Additional Resources</h4>
         <h5 style='font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 10px;'>Quick reference materials</h5>
@@ -31,12 +39,15 @@ create_disclaimer_content <- function(lang) {
           <li><span class='flag-link' id='show_column_names'>Column name</span> descriptions - explanation of column headers included in the downloadable data.</li>
           <li><span class='flag-link' id='show_station_info'>Station information</span> - descriptions of station metadata fields.</li>
         </ul>
-
+      <p style='margin-top: 12px; font-size: 14px;'>These reference materials are available for quick lookup in this Explorer, and data can also be downloaded from the <a href='https://www.canada.ca/en/environment-climate-change/services/water-overview/quantity/monitoring/survey/data-products-services/national-archive-hydat.html' target='_blank'>WSC HYDAT database</a> for offline use.</p>
 
         <h5 style='font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 10px;'>Additional Publications</h5>
+                <h5>Summary values, graphs and interpretation are included in the annual Spring Water Level Outlook and monthly Water Monitoring Bulletins that are published by GNWT-ECC</h5>
             <ul>
-              <li>Summary values, graphs and interpretation are included in the <a href='https://www.gov.nt.ca/ecc/en/services/snow_monitoring' target='_blank'> Spring Water Level Outlook</a> and <a href='https://www.gov.nt.ca/ecc/en/services/water-monitoring-bulletins' target='_blank'> Water Monitoring Bulletins</a> that are published by GNWT-ECC.</li>
-              <li> Real-time and historical Water Level and Flow data are also available via the <a href='https://wateroffice.ec.gc.ca/index_e.html' target='_blank'> Water Survey of Canada Real-Time Hydrometric Data </a> website.</li>
+              <li> <a href='https://www.gov.nt.ca/ecc/en/services/snow_monitoring' target='_blank'> Spring Water Level Outlook</a></li>
+              <li> <a href='https://www.gov.nt.ca/ecc/en/services/water-monitoring-bulletins' target='_blank'> Water Monitoring Bulletins</a></li>
+              <li><a href='https://www.gov.nt.ca/ecc/en/services/nwt-state-environment-report/11-state-water'> State of Environment Report </a></li>
+
             </ul>
 
 

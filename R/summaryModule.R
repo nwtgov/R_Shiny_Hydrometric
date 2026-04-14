@@ -157,6 +157,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             station_name = "Nom de la station",
             station_number = "Numéro de la station",
             current_level = "Niveau actuel",
+            obs_time = "Observé à",
             historical_context = "Contexte",
             percentile_range = "Plage de percentiles",
             historical_mean = "Moyenne historique",
@@ -193,6 +194,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             station_name = "Station Name",
             station_number = "Station Number",
             current_level = "Current level",
+            obs_time = "Observed at",
             historical_context = "Context",
             percentile_range = "Percentile range",
             historical_mean = "Historical average",
@@ -358,6 +360,16 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
         )
       }
 
+      # format timestamp of most recent observation
+      format_obs_time <- function(dt) {
+        if (is.na(dt)) return("N/A")
+        dt_utc <- dt
+        attr(dt_utc, "tzone") <- "UTC"  # treat source timestamp as UTC
+        dt_mt <- lubridate::with_tz(dt_utc, "America/Edmonton")
+        format(dt_mt, "%Y-%m-%d %H:%M %Z")
+      }
+
+
       # Create popup content
       popup_content <- paste0(
         "<div style='font-family: Arial, sans-serif;'>",
@@ -365,6 +377,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
         "<table class='metadata-table'>",
         "<tr><td>", map_text()$popup$station_number, ":</td><td>", context_data$STATION_NUMBER, "</td></tr>",
         "<tr><td>", map_text()$popup$current_level, ":</td><td>",ifelse(is.na(context_data$Current_Level), "N/A",paste0(round(context_data$Current_Level, 2), " m")), "</td></tr>",
+        "<tr><td>", map_text()$popup$obs_time, ":</td><td>", ifelse(is.na(context_data$Date), "N/A", sapply(context_data$Date, format_obs_time)), "</td></tr>",
         "<tr><td>", map_text()$popup$historical_context, ":</td><td>",context_data$Historical_Context, "</td></tr>",
         "<tr><td>", map_text()$popup$percentile_range, ":</td><td>",context_data$Percentile_Range, "</td></tr>",
         ifelse(!is.na(context_data$hist_mean),
