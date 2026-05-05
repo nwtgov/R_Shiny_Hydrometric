@@ -63,7 +63,7 @@ summaryUI <- function(id) {
 }
 
 # Server
-summaryServer <- function(id, active_stations_within_basin, preloaded_data, language) {
+summaryServer <- function(id, active_stations_within_basin, preloaded_data, language, realtime_data) {
   moduleServer(id, function(input, output, session) {
 
     # load shapefiles - failsafe if preload fails
@@ -108,11 +108,12 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
     # Get last updated timestamp from realtime data attribute (Github)
     last_updated_timestamp <- reactive({
-      req(realtime_data)
+      rt <- realtime_data()
+      req(rt)
 
       # Get timestamp from attribute (stored in UTC from GitHub Actions)
-      if(!is.null(attr(realtime_data, "last_updated"))) {
-        timestamp_utc <- attr(realtime_data, "last_updated")
+      if(!is.null(attr(rt, "last_updated"))) {
+        timestamp_utc <- attr(rt, "last_updated")
         # Convert from UTC to Mountain Time
         attr(timestamp_utc, "tzone") <- "UTC"  # Ensure it's treated as UTC
         timestamp_mt <- lubridate::with_tz(timestamp_utc, "America/Edmonton")
@@ -207,12 +208,12 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
     # Combine real-time data with historical context
     stations_with_context <- reactive({
-      #req(realtime_data())
       req(historical_stats_today())
       req(active_stations_within_basin)
-      req(realtime_data)
 
-      rt_data <- realtime_data
+      rt_data <- realtime_data()
+      req(rt_data)
+
 
       # If realtime_data is empty or not ready, return stations with NA context
       if (is.null(rt_data) || nrow(rt_data) == 0 || !"STATION_NUMBER" %in% names(rt_data)) {

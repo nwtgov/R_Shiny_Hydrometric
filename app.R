@@ -333,6 +333,48 @@ ui <- fluidPage(
     display: block;
   }
 
+  /* Full-bleed footer (hr + curve): tab content is narrower than viewport — break out to 100vw like navbar */
+  .tab-footer-curve-stack {
+    width: 100vw;
+    max-width: 100vw;
+    margin: 28px calc(50% - 50vw) 0 calc(50% - 50vw);
+    padding: 0;
+    box-sizing: border-box;
+    display: block;
+    clear: both;
+    overflow-x: clip;
+    overflow-y: visible;
+    position: relative;
+  }
+  .tab-footer-curve-stack .tab-footer-curve-rule {
+    border: 0;
+    border-top: 3px solid #2699D5;
+    margin: 0;
+    width: 100%;
+  }
+  /* Footer curve: fixed band height; background-size height % zooms vertically (higher % = wider drawn bitmap = more horizontal crop on narrow windows) */
+  .tab-footer-curve-stack .tab-footer-curve-crop {
+    width: 100%;
+    margin: 10px 0 0 0;
+    overflow: hidden;
+    height: 220px;
+    box-sizing: border-box;
+    background-image: url('footer_curve.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: auto 220%;
+    line-height: 0;
+  }
+  .tab-footer-curve-stack {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s linear;
+}
+.tab-pane.active.footer-visible .tab-footer-curve-stack {
+  opacity: 1;
+  visibility: visible;
+}
+
   /* ===== Mobile media query ===== */
   @media (max-width: 768px) {
     .mobile-hamburger {
@@ -463,6 +505,11 @@ ui <- fluidPage(
     .leaflet-popup-content {
       font-size: 13px !important;
     }
+    .tab-footer-curve-stack {
+      padding-bottom: 0;
+      margin-top: 20px;
+    }
+
   }
 
       "))
@@ -488,39 +535,70 @@ ui <- fluidPage(
 
   # JavaScript for mobile menu
   tags$script(HTML("
-    function toggleMobileMenu() {
-      var panel = document.getElementById('side_panel');
-      var overlay = document.getElementById('mobile_overlay');
-      if (panel && overlay) {
-        panel.classList.toggle('open');
-        overlay.classList.toggle('open');
-      }
+  function toggleMobileMenu() {
+    var panel = document.getElementById('side_panel');
+    var overlay = document.getElementById('mobile_overlay');
+    if (panel && overlay) {
+      panel.classList.toggle('open');
+      overlay.classList.toggle('open');
     }
-    function mobileSwitchTab(tabValue) {
-      // Click the corresponding tab in the hidden navbar
-      var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
-      if (tabLink.length > 0) {
-        tabLink.click();
-      }
-      // Update active state in side panel
-      $('.side-panel-nav a').removeClass('active-link');
-      $('.side-panel-nav a[data-tab=\"' + tabValue + '\"]').addClass('active-link');
-      // Close menu
-      toggleMobileMenu();
+  }
+
+  function switchTabOnly(tabValue) {
+    var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
+    if (tabLink.length > 0) {
+      tabLink.click();
     }
-    // Invalidate Leaflet map sizes when tabs become visible (fixes disappearing markers)
-    $(document).on('shown.bs.tab', 'a[data-toggle=\"tab\"]', function(e) {
-      setTimeout(function() {
-        $(window).trigger('resize');
-        $('.leaflet-container').each(function() {
-          var map = $(this).data('leaflet-map') || HTMLWidgets.find('#' + this.id);
-          if (map && map.getMap) {
-            map.getMap().invalidateSize();
-          }
-        });
-      }, 200);
-    });
-  "))
+  }
+
+  function mobileSwitchTab(tabValue) {
+    // Click the corresponding tab in the hidden navbar
+    var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
+    if (tabLink.length > 0) {
+      tabLink.click();
+    }
+
+    // Update active state in side panel
+    $('.side-panel-nav a').removeClass('active-link');
+    $('.side-panel-nav a[data-tab=\"' + tabValue + '\"]').addClass('active-link');
+
+    // Close menu
+    toggleMobileMenu();
+  }
+
+  // Footer reveal controller (simple deterministic delay)
+  var footerRevealTimer = null;
+
+  function revealActiveFooter(delayMs) {
+    if (footerRevealTimer) {
+      clearTimeout(footerRevealTimer);
+    }
+    $('.tab-pane').removeClass('footer-visible');
+    footerRevealTimer = setTimeout(function() {
+      $('.tab-pane.active').addClass('footer-visible');
+    }, delayMs || 450);
+  }
+
+  // Initial load
+  $(function() {
+    revealActiveFooter(600);
+  });
+
+  // Tab shown: reveal footer after a short delay and then fix Leaflet sizing
+  $(document).on('shown.bs.tab', 'a[data-toggle=\"tab\"]', function(e) {
+    revealActiveFooter(450);
+
+    setTimeout(function() {
+      $(window).trigger('resize');
+      $('.leaflet-container').each(function() {
+        var map = $(this).data('leaflet-map') || HTMLWidgets.find('#' + this.id);
+        if (map && map.getMap) {
+          map.getMap().invalidateSize();
+        }
+      });
+    }, 200);
+  });
+"))
 )
 
 # Basic server structure
@@ -536,6 +614,28 @@ server <- function(input, output, session) {
   app_version <- "1.1.0"
 
   language <- reactiveVal("en")
+
+  # realtime data refresh for summary tab
+  realtime_cache <- new.env(parent = emptyenv())
+  realtime_cache$bucket <- NA_integer_
+  realtime_cache$data <- NULL
+  realtime_bucket_secs <- 60 * 60   # download at most once per 60 minutes per R process
+  realtime_check_every_ms <- 30 * 60 * 1000  # re-check every half hour
+  realtime_data <- shiny::reactivePoll(
+    intervalMillis = realtime_check_every_ms,
+    session = session,
+    checkFunc = function() {
+      as.integer(floor(as.numeric(Sys.time()) / realtime_bucket_secs))
+    },
+    valueFunc = function() {
+      bucket_id <- as.integer(floor(as.numeric(Sys.time()) / realtime_bucket_secs))
+      if (is.null(realtime_cache$data) || is.na(realtime_cache$bucket) || !identical(realtime_cache$bucket, bucket_id)) {
+        realtime_cache$data <- load_github_realtime("realtime_WL_data.rds")
+        realtime_cache$bucket <- bucket_id
+      }
+      realtime_cache$data
+    }
+  )
 
   observe({
     isolate({
@@ -574,7 +674,7 @@ server <- function(input, output, session) {
     if(current_lang == "en") {
       language("fr")
       tab_map <- list(
-        "About" - "À propos",
+        "About" = "À propos",
         "Water Level Data" = "Données de niveau d'eau",
         "Metadata" = "Métadonnées",
         "Download Data" = "Télécharger",
@@ -623,10 +723,24 @@ server <- function(input, output, session) {
   output$dynamic_navbar <- renderUI({
     req(language())  # Wait for language selection
 
+    # make logo button for About tab
+    about_tab <- if (language() == "fr") "À propos" else "About"
+    js_esc <- gsub("'", "\\\\'", about_tab)
+
+
     navbarPage(
       title = div(
         style = "display: flex; align-items: center; padding: 0; margin: 0; box-shadow: none;",
-        img(src = "logo_PB.png", style = "height: 35px; contain; padding: 0; filter: none; box-shadow: none"),
+        tags$div(
+          class = "navbar-logo-click",
+          style = "display: flex; align-items: center; cursor: pointer;",
+          title = if (language() == "fr") "Aller à À propos" else "Go to About",
+          onclick = I(sprintf("switchTabOnly('%s');", js_esc)),
+          img(
+            src = "logo_PB.png",
+            style = "height: 35px; object-fit: contain; padding: 0; filter: none; box-shadow: none"
+          )
+        ),
         span(
           if(language() == "fr") {
             "Explorateur des données hydrométriques – TNO"
@@ -634,7 +748,9 @@ server <- function(input, output, session) {
             "NWT Water Level and Flow Data Explorer"
           },
           class = "navbar-title-text",
-          style = "font-size: 24px; margin-left: 35px; margin-right: 35px;"
+          style = "font-size: 24px; margin-left: 35px; margin-right: 35px; cursor: pointer;",
+          onclick = I(sprintf("switchTabOnly('%s');", js_esc)),
+          title = if (language() == "fr") "Aller à À propos" else "Go to About"
         )
       ),
       id = "navbar",
@@ -789,7 +905,7 @@ server <- function(input, output, session) {
 
       # Call module servers
       aboutServer("about", language)
-      summaryServer("summary", active_stations_within_basin, preloaded_data, language)
+      summaryServer("summary", active_stations_within_basin, preloaded_data, language, realtime_data)
       downloadServer("download", first_visits, language)
       metadataServer("metadata", preloaded_data)
       faqServer("faq", first_visits, language, app_version)

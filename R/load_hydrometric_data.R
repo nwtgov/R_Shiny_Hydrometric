@@ -73,8 +73,7 @@ stations_within_basin <- stations_within_basin %>%
 
 master_hist_WL <- readRDS("data/Master_hist_WL.rds")
 
-# Get real-time data for all stations - from GitHub repo that updates at 8am MT each day
-realtime_data <- load_github_realtime("realtime_WL_data.rds")
+# realtime_data no longer loaded here; instead is refreshed in app.R
 
 
 # helper function for formatted location name
