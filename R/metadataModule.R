@@ -23,8 +23,24 @@ metadataUI <- function(id) {
         top: auto !important;
         z-index: 1000 !important;
       }
-
+    @keyframes map-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
     ")),
+
+    # Loading spinner overlay (visible until map renders)
+    tags$div(
+      id = ns("map_loading"),
+      style = "position: fixed; top: 60px; left: 0; right: 0; bottom: 0;
+               background: rgba(255,255,255,0.9); z-index: 998;
+               display: flex; align-items: center; justify-content: center;",
+      tags$div(
+        style = "border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+                 border-radius: 50%; width: 50px; height: 50px;
+                 animation: map-spin 1s linear infinite;"
+      )
+    ),
 
     # Map output
     leafletOutput(ns("metadata_map"), height = "100%"),
@@ -66,6 +82,13 @@ metadataUI <- function(id) {
 # Server function for metadata module
 metadataServer <- function(id, preloaded_data) {
   moduleServer(id, function(input, output, session) {
+
+    # Hide map loading spinner once the map finishes rendering
+    ns <- session$ns
+    observeEvent(input$metadata_map_bounds, {
+      shinyjs::runjs(sprintf("$('#%s').fadeOut(300);", ns("map_loading")))
+    }, once = TRUE)
+
 
     # Language reactive (for future French support)
     language <- reactiveVal("en")
