@@ -19,7 +19,27 @@ Cet outil fournit des valeurs sommaires ainsi qu’une sélection de données di
 data,Where can I read the full data disclaimer and terms of use?,"<p>See the Water Survey of Canada <a href='https://wateroffice.ec.gc.ca/disclaimer_info_e.html'> disclaimer</a> and <a href'https://www.canada.ca/en/transparency/terms.html'> data use terms and conditions</a> on the Government of Canada website.</p>
 <p>Additional terms of use specific to this Explorer are provided in the Data Disclaimer section of the Download Data tab.</p>",,"<p> Consultez l'<a href='https://eau.ec.gc.ca/disclaimer_info_f.html'>avertissement</a> des Relevés hydrologiques du Canada et les <a href='https://www.canada.ca/fr/transparence/avis.html'>Avis</a> sur le site Web du gouvernement du Canada </p>
 <p>Des conditions d’utilisation supplémentaires propres à cet outil sont également présentées dans la section Avertissement sur les données de l’onglet Télécharger des données .</p>"
-methods_sites,How is water level measured?,"Water level (stage) is measured continuously at hydrometric stations using a combination of pressure transducers, float-driven sensors, and/or radar-based instruments. These instruments record water level at regular intervals (typically every 5 to 15 minutes) and transmit the data via satellite to the Water Survey of Canada. ",Comment mesure-t-on le niveau d'eau?,"Le niveau d’eau (hauteur d’eau) est mesuré en continu aux stations hydrométriques à l’aide d’une combinaison de capteurs de pression, de capteurs à flotteur et/ou d’instruments radar. Ces instruments enregistrent le niveau d’eau à intervalles réguliers (généralement toutes les 5 à 15 minutes) et transmettent les données par satellite aux Relevés hydrologiques du Canada."
+methods_sites,How is water level measured?,"Water level (stage) is measured continuously at hydrometric stations using a combination of pressure transducers, float-driven sensors, and/or radar-based instruments. These instruments record water level at regular intervals (typically every 5 to 15 minutes) and transmit the data via satellite to the Water Survey of Canada. 
+<figure style=""margin: 12px 0 0 0; max-width: 100%;"">
+  <img
+    src=""HydrometricGauge_B_Anglo.jpg""
+    alt=""Hydrometric gauge illustration""
+    style=""max-width: 100%; height: auto; display: block;""
+  />
+  <figcaption style=""font-size: 0.9em; color: #555; margin-top: 8px;"">
+    Illustration © Alison McCreesh
+  </figcaption>
+</figure>",Comment mesure-t-on le niveau d'eau?,"Le niveau d’eau (hauteur d’eau) est mesuré en continu aux stations hydrométriques à l’aide d’une combinaison de capteurs de pression, de capteurs à flotteur et/ou d’instruments radar. Ces instruments enregistrent le niveau d’eau à intervalles réguliers (généralement toutes les 5 à 15 minutes) et transmettent les données par satellite aux Relevés hydrologiques du Canada.
+<figure style=""margin: 12px 0 0 0; max-width: 100%;"">
+  <img
+    src=""HydrometricGauge_B_Franco.jpg""
+    alt=""Hydrometric gauge illustration""
+    style=""max-width: 100%; height: auto; display: block;""
+  />
+  <figcaption style=""font-size: 0.9em; color: #555; margin-top: 8px;"">
+    Illustration © Alison McCreesh
+  </figcaption>
+</figure>"
 methods_sites,How is flow (discharge) calculated?,"Flow is not measured directly on a continuous basis. Instead, Water Survey of Canada hydrometric technicians make periodic manual flow measurements using current meters or Acoustic Doppler Current Profilers. These measurements are used to develop a water level-flow relationship (rating curve) for each station. Continuous flow values are then derived by applying the rating curve to the continuously recorded water level data. In northern rivers, ice formation significantly alters the water level-flow relationship, making winter flow more challending to estimate. In general, winter water level readings are more reliable than winter flow readings.",Comment calcule-t-on le débit (l'écoulement fluvial)?,"Le débit (écoulement fluvial) n’est pas mesuré directement de façon continue. Les techniciens des Relevés hydrologiques du Canada effectuent plutôt des mesures ponctuelles du débit à l’aide de moulinets hydrométriques ou de profileurs de courant Doppler acoustique. Ces mesures servent à établir une relation entre le niveau d’eau et le débit (courbe de tarage) pour chaque station. Les valeurs de débit en continu sont ensuite obtenues en appliquant cette courbe aux données de niveau d’eau enregistrées en continu.
 
 Dans les rivières nordiques, la formation de glace modifie considérablement la relation entre le niveau d’eau et le débit, ce qui rend l’estimation du débit hivernal plus difficile. En général, les mesures de niveau d’eau en hiver sont plus fiables que les estimations de débit."

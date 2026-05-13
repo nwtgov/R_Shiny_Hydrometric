@@ -348,21 +348,21 @@ ui <- fluidPage(
   }
   .tab-footer-curve-stack .tab-footer-curve-rule {
     border: 0;
-    border-top: 3px solid #2699D5;
+    border-top: 4px solid #2699D5;
     margin: 0;
     width: 100%;
   }
   /* Footer curve: fixed band height; background-size height % zooms vertically (higher % = wider drawn bitmap = more horizontal crop on narrow windows) */
   .tab-footer-curve-stack .tab-footer-curve-crop {
     width: 100%;
-    margin: 10px 0 0 0;
+    margin: 0 0 0 0;
     overflow: hidden;
-    height: 220px;
+    height: 260px;
     box-sizing: border-box;
     background-image: url('footer_curve.png');
     background-repeat: no-repeat;
     background-position: center top;
-    background-size: auto 220%;
+    background-size: auto 180%;
     line-height: 0;
   }
   .tab-footer-curve-stack {
@@ -507,7 +507,7 @@ ui <- fluidPage(
     }
     .tab-footer-curve-stack {
       padding-bottom: 0;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
   }
@@ -535,56 +535,65 @@ ui <- fluidPage(
 
   # JavaScript for mobile menu
   tags$script(HTML("
-  function toggleMobileMenu() {
-    var panel = document.getElementById('side_panel');
-    var overlay = document.getElementById('mobile_overlay');
-    if (panel && overlay) {
-      panel.classList.toggle('open');
-      overlay.classList.toggle('open');
+    function toggleMobileMenu() {
+      var panel = document.getElementById('side_panel');
+      var overlay = document.getElementById('mobile_overlay');
+      if (panel && overlay) {
+        panel.classList.toggle('open');
+        overlay.classList.toggle('open');
+      }
     }
-  }
-
-  function switchTabOnly(tabValue) {
+    function switchTabOnly(tabValue) {
     var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
     if (tabLink.length > 0) {
       tabLink.click();
     }
   }
+    function mobileSwitchTab(tabValue) {
+      var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
+      if (tabLink.length > 0) {
+        tabLink.click();
+      }
+      $('.side-panel-nav a').removeClass('active-link');
+      $('.side-panel-nav a[data-tab=\"' + tabValue + '\"]').addClass('active-link');
+      toggleMobileMenu();
+    }
+    // Footer reveal controller (simple deterministic delay)
+    var footerRevealTimer = null;
 
-  function mobileSwitchTab(tabValue) {
-    // Click the corresponding tab in the hidden navbar
-    var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
-    if (tabLink.length > 0) {
-      tabLink.click();
+    function revealActiveFooter(delayMs) {
+      if (footerRevealTimer) {
+        clearTimeout(footerRevealTimer);
+      }
+      $('.tab-pane').removeClass('footer-visible');
+      footerRevealTimer = setTimeout(function() {
+        $('.tab-pane.active').addClass('footer-visible');
+      }, delayMs || 450);
     }
 
-    // Update active state in side panel
-    $('.side-panel-nav a').removeClass('active-link');
-    $('.side-panel-nav a[data-tab=\"' + tabValue + '\"]').addClass('active-link');
-
-    // Close menu
-    toggleMobileMenu();
-  }
-
-  // Footer reveal controller (simple deterministic delay)
-  var footerRevealTimer = null;
-
-  function revealActiveFooter(delayMs) {
-    if (footerRevealTimer) {
-      clearTimeout(footerRevealTimer);
+    // Initial reveal: poll until the active tab-pane exists in the DOM
+$(function() {
+  var tries = 0;
+  var maxTries = 75; // 15 seconds at 200ms intervals — covers any cold start
+  function tryReveal() {
+    tries++;
+    if ($('.tab-pane.active').length > 0) {
+      revealActiveFooter(150);
+    } else if (tries < maxTries) {
+      setTimeout(tryReveal, 200);
     }
-    $('.tab-pane').removeClass('footer-visible');
-    footerRevealTimer = setTimeout(function() {
-      $('.tab-pane.active').addClass('footer-visible');
-    }, delayMs || 450);
   }
+  tryReveal();
+});
 
-  // Initial load
-  $(function() {
-    revealActiveFooter(600);
-  });
+// Safety net: also reveal whenever Shiny finishes any work
+$(document).on('shiny:idle', function() {
+  if ($('.tab-pane.active').length > 0 && $('.tab-pane.active.footer-visible').length === 0) {
+    revealActiveFooter(150);
+  }
+});
 
-  // Tab shown: reveal footer after a short delay and then fix Leaflet sizing
+      // Tab shown: reveal footer after a short delay and then fix Leaflet sizing
   $(document).on('shown.bs.tab', 'a[data-toggle=\"tab\"]', function(e) {
     revealActiveFooter(450);
 
