@@ -54,7 +54,8 @@ metadataUI <- function(id) {
       top = 100,
       left = 20,
       style = "width: 180px !important; max-width: 180px !important; min-width: 180px !important; padding: 15px; background-color: white; border-radius: 5px; box-shadow: 0 2px 15px rgba(0,0,0,0.2); z-index: 2;",
-      tags$strong("Filter by:"),
+      #tags$strong("Filter by:"),
+      uiOutput(ns("filter_label")),
 
       # Parameter dropdown
       selectInput(
@@ -80,18 +81,24 @@ metadataUI <- function(id) {
 }
 
 # Server function for metadata module
-metadataServer <- function(id, preloaded_data) {
+metadataServer <- function(id, preloaded_data, language) {
   moduleServer(id, function(input, output, session) {
 
     # Hide map loading spinner once the map finishes rendering
     ns <- session$ns
+
+    # add spinner waiter for map loading or if lang changes
+    observeEvent(language(), {
+      shinyjs::runjs(sprintf("$('#%s').show();", ns("map_loading")))
+      shinyjs::runjs(sprintf(
+        "setTimeout(function(){ $('#%s').fadeOut(300); }, 12000);",
+        ns("map_loading")
+      ))
+    }, ignoreInit = TRUE)
+
     observeEvent(input$metadata_map_bounds, {
       shinyjs::runjs(sprintf("$('#%s').fadeOut(300);", ns("map_loading")))
-    }, once = TRUE)
-
-
-    # Language reactive (for future French support)
-    language <- reactiveVal("en")
+    })
 
     # load shapefiles - failsafe if preload fails
     if (!is.null(preloaded_data()$mackenzie_basin)) {
@@ -180,26 +187,60 @@ metadataServer <- function(id, preloaded_data) {
       return(years)
     })
 
-    #update dropdowns with defaults
-    observe({
+    # Populate parameter + year dropdowns (choices, labels, selection)
+    populate_filter_inputs <- function() {
+      req(map_text())
+      req(input$parameter_filter)
       req(available_years())
 
       years <- available_years()
+      req(length(years) > 0)
+
+      texts <- map_text()
+      years_chr <- sort(as.character(years))
+      years_end <- sort(as.character(years), decreasing = TRUE)
+
+      start_sel <- isolate(input$start_year)
+      end_sel <- isolate(input$end_year)
+      if (is.null(start_sel) || !as.character(start_sel) %in% years_chr) {
+        start_sel <- as.character(min(years))
+      }
+      if (is.null(end_sel) || !as.character(end_sel) %in% years_end) {
+        end_sel <- as.character(max(years))
+      }
+
+      updateSelectInput(
+        session,
+        "parameter_filter",
+        label = NULL,
+        choices = texts$filter$choices,
+        selected = isolate(input$parameter_filter)
+      )
 
       updateSelectInput(
         session,
         "start_year",
-        choices = sort(years),
-        selected = min(years)  # Default to earliest year
+        label = texts$filter$start_year,
+        choices = years_chr,
+        selected = start_sel
       )
 
       updateSelectInput(
         session,
         "end_year",
-        choices = sort(years, decreasing = TRUE),
-        selected = max(years)  # Default to latest year
+        label = texts$filter$end_year,
+        choices = years_end,
+        selected = end_sel
       )
-    })
+    }
+
+    observeEvent(input$parameter_filter, {
+      populate_filter_inputs()
+    }, ignoreInit = FALSE)
+
+    observeEvent(language(), {
+      populate_filter_inputs()
+    }, ignoreInit = FALSE)
 
 
     #filtered station date ranges
@@ -279,10 +320,26 @@ metadataServer <- function(id, preloaded_data) {
             latitude = "Latitude",
             drainage_area = "Superficie du bassin versant",
             real_time = "Données en temps réel",
-            #flow_measurement = "Type de mesure de débit",
-            #flow_operation = "Calendrier d'exploitation du débit",
-            #level_measurement = "Type de mesure de niveau",
-            operation_schedule = "Calendrier d'exploitation du niveau"
+            operation_schedule = "Calendrier d'exploitation",
+            flow_operation = "Calendrier d'exploitation du débit",
+            level_operation = "Calendrier d'exploitation du niveau",
+            flow_date_range = "Plage de dates du débit (couverture des données)",
+            level_date_range = "Plage de dates du niveau (couverture des données)"
+          ),
+          filter = list(
+            panel_label = "Filtrer par:",
+            choices = list(
+              "Toutes les stations" = "all",
+              "Débit" = "flow",
+              "Niveau" = "level"
+            ),
+            start_year = "Année de début :",
+            end_year = "Année de fin :"
+          ),
+          legend = list(
+            title = "État de la station",
+            active = "Active",
+            discontinued = "Discontinuée"
           )
         )
       } else {
@@ -309,11 +366,63 @@ metadataServer <- function(id, preloaded_data) {
             latitude = "Latitude",
             drainage_area = "Drainage Area", # total surface area that drains into the gauge site (km^2)
             real_time = "Real time data",
-            operation_schedule = "Current operation schedule"
-            )
+            operation_schedule = "Current operation schedule",
+            flow_operation = "Flow operation schedule",
+            level_operation = "Level operation schedule",
+            flow_date_range = "Flow date range (data coverage)",
+            level_date_range = "Level date range (data coverage)"
+            ),
+          filter = list(
+            panel_label = "Filter by:",
+            choices = list(
+              "All Stations" = "all",
+              "Flow" = "flow",
+              "Level" = "level"
+            ),
+            start_year = "Start Year:",
+            end_year = "End Year:"
+          ),
+          legend = list(
+            title = "Station status",
+            active = "Active",
+            discontinued = "Discontinued"
+          )
         )
       }
     })
+
+    # filter label
+    output$filter_label <- renderUI({
+      req(map_text())
+      tags$strong(map_text()$filter$panel_label)
+    })
+
+    # update filter panel labels.choices upon lang toggle
+    observeEvent(language(), {
+      req(map_text())
+      req(input$parameter_filter)
+
+      updateSelectInput(
+        session,
+        "parameter_filter",
+        label = NULL,
+        choices = map_text()$filter$choices,
+        selected = isolate(input$parameter_filter)
+      )
+
+      updateSelectInput(
+        session,
+        "start_year",
+        label = map_text()$filter$start_year
+      )
+
+      updateSelectInput(
+        session,
+        "end_year",
+        label = map_text()$filter$end_year
+      )
+    }, ignoreInit = TRUE)
+
 
     # colour palette for station status
     status_colours <- reactive({
@@ -342,69 +451,18 @@ metadataServer <- function(id, preloaded_data) {
 
     # Render map
     output$metadata_map <- renderLeaflet({
-      req(filtered_stations())
-      #req(stations_metadata()) # replaced w filtered_stations()
+      req(stations_metadata())
       req(map_text())
       req(status_colours())
 
-      map_text <- isolate(map_text())
-      meta_df <- filtered_stations() # prev stations_metadata
+      texts <- isolate(map_text())
+      meta_df <- meta_df_display(filtered_stations(), language())
       status_pal <- status_colours()
+      popup_content <- build_meta_popup_content(meta_df, texts)
 
-      # Create popup content for each station (vector, one per station)
-      popup_content <- paste0(
-        "<div style='font-family: Arial, sans-serif;'>",
-        "<div class='metadata-header'>", meta_df$formatted_name, "</div>",
-        "<table class='metadata-table'>",
-          "<tr><td>", map_text()$popup$station_number, ":</td><td>",
-          ifelse(is.na(meta_df$STATION_NUMBER), "N/A", meta_df$STATION_NUMBER),"</td></tr>",
-          "<tr><td>", map_text()$popup$variables_measured, ":</td><td>",
-          ifelse(is.na(meta_df$variables_measured), "N/A", meta_df$variables_measured),"</td></tr>",
-        # Flow data range - change 100% to >80%, for now
-        ifelse(meta_df$has_flow, paste0("<tr><td>Flow date range (data coverage):</td><td>",
-                                        ifelse(is.na(meta_df$Q_date_range), "N/A",
-                                               paste0(meta_df$Q_date_range, " (",
-                                                      ifelse(is.na(meta_df$Q_data_coverage_pct), "N/A",
-                                                             ifelse(meta_df$Q_data_coverage_pct >= 100, ">80%", paste0(meta_df$Q_data_coverage_pct, "%"))),
-                                                      ")")),"</td></tr>"), ""),
-        # Level data range - change 100% to >80% for now
-        ifelse(meta_df$has_level, paste0("<tr><td>Level date range (data coverage):</td><td>",
-                                         ifelse(is.na(meta_df$H_date_range), "N/A",
-                                                paste0(meta_df$H_date_range, " (",
-                                                       ifelse(is.na(meta_df$H_data_coverage_pct), "N/A",
-                                                              ifelse(meta_df$H_data_coverage_pct >= 100, ">80%", paste0(meta_df$H_data_coverage_pct, "%"))),
-                                                       ")")),"</td></tr>"),""),
-        ifelse(
-          # Check if operations match (both exist and are equal, or one is NA and other exists)
-          (!is.na(meta_df$Q_Operation) & !is.na(meta_df$H_Operation) & meta_df$Q_Operation == meta_df$H_Operation) |
-            (!is.na(meta_df$Q_Operation) & is.na(meta_df$H_Operation) & meta_df$has_flow) |
-            (is.na(meta_df$Q_Operation) & !is.na(meta_df$H_Operation) & meta_df$has_level),
-          # Show single operation schedule
-          ifelse(
-            !is.na(meta_df$Q_Operation),
-            paste0("<tr><td>", map_text()$popup$operation_schedule, ":</td><td>", meta_df$Q_Operation, "</td></tr>"),
-            ifelse(!is.na(meta_df$H_Operation),
-                   paste0("<tr><td>", map_text()$popup$operation_schedule, ":</td><td>", meta_df$H_Operation, "</td></tr>"), "")
-          ),
-          # Show separate if they differ
-          paste0(
-            ifelse(meta_df$has_flow & !is.na(meta_df$Q_Operation),
-                   paste0("<tr><td>", map_text()$popup$flow_operation, ":</td><td>", meta_df$Q_Operation, "</td></tr>"), ""),
-            ifelse(meta_df$has_level & !is.na(meta_df$H_Operation),
-                   paste0("<tr><td>", map_text()$popup$level_operation, ":</td><td>", meta_df$H_Operation, "</td></tr>"), "")
-          )
-        ),
-        "<tr><td>", map_text()$popup$longitude, ":</td><td>",
-          ifelse(is.na(sf::st_coordinates(meta_df)[, 1]), "N/A", as.character(round(sf::st_coordinates(meta_df)[, 1], 4))),"</td></tr>",
-          "<tr><td>", map_text()$popup$latitude, ":</td><td>",
-          ifelse(is.na(sf::st_coordinates(meta_df)[, 2]), "N/A", as.character(round(sf::st_coordinates(meta_df)[, 2], 4))),"</td></tr>",
-          "<tr><td>", map_text()$popup$drainage_area, ":</td><td>",
-          ifelse(is.na(meta_df$DRAINAGE_AREA_GROSS), "N/A", paste0(meta_df$DRAINAGE_AREA_GROSS, " km²")), "</td></tr>",
-        "<tr><td>", map_text()$popup$real_time, ":</td><td>",
-        ifelse(is.na(meta_df$REAL_TIME), "N/A", meta_df$REAL_TIME),"</td></tr>",
-        "</table>",
-        "</div>"
-      )
+
+
+
 
       # get coords from meta_df
       coords <- sf::st_coordinates(meta_df)
@@ -419,16 +477,16 @@ metadataServer <- function(id, preloaded_data) {
       leaflet() %>%
         addTiles() %>%
         setView(lng = -123, lat = 63.7, zoom = 4) %>%
-        addProviderTiles(providers$CartoDB.Positron, group = map_text()$base_maps$cartodb) %>%
-        addProviderTiles(providers$Esri.WorldImagery, group = map_text()$base_maps$esri) %>%
-        addPolylines(data = nwt_boundary, weight = 2, color = "#000000", opacity = 0.8, group = map_text()$basins$nwt_boundary) %>%
-        addPolylines(data = mackenzie_basin, weight = 2, color = "#888888", opacity = 0.8, group = map_text()$basins$mackenzie) %>%
-        addPolylines(data = slave, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$slave) %>%
-        addPolylines(data = snare, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$snare) %>%
-        addPolylines(data = YKriver, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$YKriver) %>%
-        addPolylines(data = peel, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$peel) %>%
-        addPolylines(data = hay, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$hay) %>%
-        addPolylines(data = liard, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$liard) %>%
+        addProviderTiles(providers$CartoDB.Positron, group = texts$base_maps$cartodb) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = texts$base_maps$esri) %>%
+        addPolylines(data = nwt_boundary, weight = 2, color = "#000000", opacity = 0.8, group = texts$basins$nwt_boundary) %>%
+        addPolylines(data = mackenzie_basin, weight = 2, color = "#888888", opacity = 0.8, group = texts$basins$mackenzie) %>%
+        addPolylines(data = slave, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$slave) %>%
+        addPolylines(data = snare, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$snare) %>%
+        addPolylines(data = YKriver, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$YKriver) %>%
+        addPolylines(data = peel, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$peel) %>%
+        addPolylines(data = hay, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$hay) %>%
+        addPolylines(data = liard, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$liard) %>%
         addCircleMarkers(
           lng = coords[, 1],
           lat = coords[, 2],
@@ -443,15 +501,17 @@ metadataServer <- function(id, preloaded_data) {
           popupOptions = popupOptions(autoPan = TRUE)
         ) %>%
         addLayersControl(
-          overlayGroups = c(map_text()$basins$nwt_boundary, map_text()$basins$mackenzie, map_text()$basins$slave, map_text()$basins$snare, map_text()$basins$YKriver, map_text()$basins$liard, map_text()$basins$peel, map_text()$basins$hay),
-          baseGroups = c(map_text()$base_maps$cartodb, map_text()$base_maps$esri),
+          overlayGroups = c(texts$basins$nwt_boundary, texts$basins$mackenzie, texts$basins$slave, texts$basins$snare, texts$basins$YKriver, texts$basins$liard, texts$basins$peel, texts$basins$hay),
+          baseGroups = c(texts$base_maps$cartodb, texts$base_maps$esri),
           options = layersControlOptions(collapsed = TRUE)
         ) %>%
         addLegend(
           position = "bottomright",
-          pal = status_pal,
-          values = c("ACTIVE", "DISCONTINUED"),
-          title = "Station status",
+          #pal = status_pal,
+          #values = c("ACTIVE", "DISCONTINUED"),
+          colors = c("#3388ff", "#cccccc"),
+          labels = c(texts$legend$active, texts$legend$discontinued),
+          title = texts$legend$title,
           opacity = 1
         ) %>%
         htmlwidgets::onRender("
@@ -471,64 +531,15 @@ metadataServer <- function(id, preloaded_data) {
     ")
     })
 
-    #update map when filter changes (leafProxy instead of re-render)
+    # Update markers when filter changes (proxy only — no full re-render)
     observe({
       req(filtered_stations())
-      req(map_text())
       req(status_colours())
 
-      meta_df <- filtered_stations()
+      texts <- isolate(map_text())
+      meta_df <- meta_df_display(filtered_stations(), language())
       status_pal <- status_colours()
-
-      # Create popup content
-      popup_content <- paste0(
-        "<div style='font-family: Arial, sans-serif;'>",
-        "<div class='metadata-header'>", meta_df$formatted_name, "</div>",
-        "<table class='metadata-table'>",
-        "<tr><td>", map_text()$popup$station_number, ":</td><td>",
-        ifelse(is.na(meta_df$STATION_NUMBER), "N/A", meta_df$STATION_NUMBER),"</td></tr>",
-        "<tr><td>", map_text()$popup$variables_measured, ":</td><td>",
-        ifelse(is.na(meta_df$variables_measured), "N/A", meta_df$variables_measured),"</td></tr>",
-        ifelse(meta_df$has_flow, paste0("<tr><td>Flow date range (data coverage):</td><td>",
-                                        ifelse(is.na(meta_df$Q_date_range), "N/A",
-                                               paste0(meta_df$Q_date_range, " (",
-                                                      ifelse(is.na(meta_df$Q_data_coverage_pct), "N/A",
-                                                             ifelse(meta_df$Q_data_coverage_pct >= 100, ">80%", paste0(meta_df$Q_data_coverage_pct, "%"))),
-                                                      ")")),"</td></tr>"), ""),
-        ifelse(meta_df$has_level, paste0("<tr><td>Level date range (data coverage):</td><td>",
-                                         ifelse(is.na(meta_df$H_date_range), "N/A",
-                                                paste0(meta_df$H_date_range, " (",
-                                                       ifelse(is.na(meta_df$H_data_coverage_pct), "N/A",
-                                                              ifelse(meta_df$H_data_coverage_pct >= 100, ">80%", paste0(meta_df$H_data_coverage_pct, "%"))),
-                                                       ")")),"</td></tr>"),""),
-        ifelse(
-          (!is.na(meta_df$Q_Operation) & !is.na(meta_df$H_Operation) & meta_df$Q_Operation == meta_df$H_Operation) |
-            (!is.na(meta_df$Q_Operation) & is.na(meta_df$H_Operation) & meta_df$has_flow) |
-            (is.na(meta_df$Q_Operation) & !is.na(meta_df$H_Operation) & meta_df$has_level),
-          ifelse(
-            !is.na(meta_df$Q_Operation),
-            paste0("<tr><td>", map_text()$popup$operation_schedule, ":</td><td>", meta_df$Q_Operation, "</td></tr>"),
-            ifelse(!is.na(meta_df$H_Operation),
-                   paste0("<tr><td>", map_text()$popup$operation_schedule, ":</td><td>", meta_df$H_Operation, "</td></tr>"), "")
-          ),
-          paste0(
-            ifelse(meta_df$has_flow & !is.na(meta_df$Q_Operation),
-                   paste0("<tr><td>", map_text()$popup$flow_operation, ":</td><td>", meta_df$Q_Operation, "</td></tr>"), ""),
-            ifelse(meta_df$has_level & !is.na(meta_df$H_Operation),
-                   paste0("<tr><td>", map_text()$popup$level_operation, ":</td><td>", meta_df$H_Operation, "</td></tr>"), "")
-          )
-        ),
-        "<tr><td>", map_text()$popup$longitude, ":</td><td>",
-        ifelse(is.na(sf::st_coordinates(meta_df)[, 1]), "N/A", as.character(round(sf::st_coordinates(meta_df)[, 1], 4))),"</td></tr>",
-        "<tr><td>", map_text()$popup$latitude, ":</td><td>",
-        ifelse(is.na(sf::st_coordinates(meta_df)[, 2]), "N/A", as.character(round(sf::st_coordinates(meta_df)[, 2], 4))),"</td></tr>",
-        "<tr><td>", map_text()$popup$drainage_area, ":</td><td>",
-        ifelse(is.na(meta_df$DRAINAGE_AREA_GROSS), "N/A", paste0(meta_df$DRAINAGE_AREA_GROSS, " km²")), "</td></tr>",
-        "<tr><td>", map_text()$popup$real_time, ":</td><td>",
-        ifelse(is.na(meta_df$REAL_TIME), "N/A", meta_df$REAL_TIME),"</td></tr>",
-        "</table>",
-        "</div>"
-      )
+      popup_content <- build_meta_popup_content(meta_df, texts)
 
       coords <- sf::st_coordinates(meta_df)
       station_status <- if ("HYD_STATUS" %in% colnames(meta_df)) {
@@ -537,26 +548,31 @@ metadataServer <- function(id, preloaded_data) {
         rep(NA_character_, nrow(meta_df))
       }
 
-      # Update map markers
-      leafletProxy(session$ns("metadata_map"), session) %>%
-        clearMarkers() %>%
-        addCircleMarkers(
-          lng = coords[, 1],
-          lat = coords[, 2],
-          color = "black",
-          fillColor = status_pal(station_status),
-          radius = 5,
-          label = meta_df$formatted_name,
-          weight = 1,
-          opacity = 0.8,
-          fillOpacity = 0.8,
-          popup = popup_content,
-          popupOptions = popupOptions(autoPan = TRUE)
-        )
+      tryCatch({
+        leafletProxy(session$ns("metadata_map"), session) %>%
+          clearMarkers() %>%
+          addCircleMarkers(
+            lng = coords[, 1],
+            lat = coords[, 2],
+            color = "black",
+            fillColor = status_pal(station_status),
+            radius = 5,
+            label = meta_df$formatted_name,
+            weight = 1,
+            opacity = 0.8,
+            fillOpacity = 0.8,
+            popup = popup_content,
+            popupOptions = popupOptions(autoPan = TRUE)
+          )
+      }, error = function(e) NULL)
     })
 
     # track if sub-basins have been hidden
     sub_basins_hidden <- reactiveVal(FALSE)
+
+    observeEvent(language(), {
+      sub_basins_hidden(FALSE)
+    }, ignoreInit = TRUE)
 
     # hide sub-basins when map is first rendered
     observeEvent(input$metadata_map_zoom, {
@@ -582,7 +598,7 @@ metadataServer <- function(id, preloaded_data) {
           })
         })
       }
-    }, once = TRUE)
+    })
 
 
   })

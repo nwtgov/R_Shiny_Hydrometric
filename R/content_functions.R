@@ -1,7 +1,7 @@
 
 # Content functions for Hydrometric App
 
-# Function to create about content
+# AboutModule
 create_about_content <- function(lang) {
   if(lang == "fr") {
     HTML("<div style='font-size: 14px;'>
@@ -100,21 +100,183 @@ create_about_content <- function(lang) {
   }
 }
 
-# Function for footer_curve - About, Download and FAQ tabs
-footer_curve_ui <- function() {
+# Function for footer links
+
+gnwt_footer_graphic <- function() {
   tags$div(
-    class = "tab-footer-curve-stack",
-    tags$hr(class = "tab-footer-curve-rule"),
-    # Background image: narrow width shows centre slice; widen to reveal L/R edges
-    tags$div(
-      class = "tab-footer-curve-crop",
-      role = "img",
+    class = "site-footer__graphic",
+    tags$img(
+      src = "footer_curve_new2.svg",
+      class = "site-footer__curve",
+      alt = "",
       `aria-hidden` = "true"
     )
   )
 }
 
-# Function to create disclaimer content - for DownloadModule
+gnwt_footer_links <- function(lang = "en") {
+  links <- if (lang == "fr") {
+    list(
+      phone        = c("Répertoire téléphonique", "http://rdirectory.gov.nt.ca/rDirectory.aspx"),
+      terms        = c("Modalités d'utilisation", "https://www.gov.nt.ca/en/terms"),
+      accessibility = c("Accessibilité", "https://www.gov.nt.ca/accessibility/"),
+      contact      = c("Contact", "https://www.gov.nt.ca/contact-gnwt"),
+      news         = c("Nouvelles", "https://www.gov.nt.ca/newsroom")
+    )
+  } else {
+    list(
+      phone        = c("Phone Directory", "http://rdirectory.gov.nt.ca/rDirectory.aspx"),
+      terms        = c("Terms of use", "https://www.gov.nt.ca/en/terms"),
+      accessibility = c("Accessibility", "https://www.gov.nt.ca/accessibility/"),
+      contact      = c("Contact", "https://www.gov.nt.ca/contact-gnwt"),
+      news         = c("News", "https://www.gov.nt.ca/newsroom")
+    )
+  }
+
+  tags$nav(
+    class = "gnwt-footer-links",
+    `aria-label` = if (lang == "fr") "Liens du pied de page" else "Footer links",
+    lapply(names(links), function(id) {
+      tags$a(
+        href = links[[id]][2],
+        class = paste("gnwt-footer-link", paste0("gnwt-footer-link--", id)),
+        links[[id]][1]
+      )
+    })
+  )
+}
+
+
+gnwt_footer_branding <- function(lang = "en") {
+  if (lang == "fr") {
+    line_small <- "Gouvernement des"
+    line_large <- "Territoires du Nord-Ouest"
+  } else {
+    line_small <- "Government of"
+    line_large <- "Northwest Territories"
+  }
+
+  tags$div(
+    class = "site-footer__branding",
+    tags$a(
+      href = "https://www.gov.nt.ca/",
+      class = "site-footer__brand",
+      tags$div(class = "site-footer__brand-line site-footer__brand-line--small", line_small),
+      tags$div(class = "site-footer__brand-line site-footer__brand-line--large", line_large)
+    )
+  )
+}
+
+gnwt_footer_ui <- function(lang = "en") {
+  tags$footer(
+    class = "site-footer tab-footer-curve-stack",
+    gnwt_footer_graphic(),
+    tags$div(
+      class = "site-footer__content",
+      tags$div(
+        class = "site-footer__inner",
+        gnwt_footer_links(lang),
+        gnwt_footer_branding(lang)
+      )
+    )
+  )
+}
+
+footer_curve_ui <- function(lang = "en") {
+  gnwt_footer_ui(lang)
+}
+
+# SummaryModule
+#Prep table for popup display (translate select column values)
+summary_df_display <- function(summary_df, lang) {
+  summary_df <- summary_df  # work on caller's copy semantics via mutate chain
+
+  if (lang == "fr") {
+    summary_df <- summary_df %>%
+      dplyr::mutate(
+        Historical_Context = dplyr::recode(
+          Historical_Context,
+          "Well above average" = "Bien supérieur à la moyenne",
+          "Above average"      = "Supérieur à la moyenne",
+          "Average"            = "Près de la moyenne",
+          "Below average"      = "Inférieur à la moyenne",
+          "Well below average" = "Bien inférieur à la moyenne",
+          "NA"                 = "N/A",
+          .default             = Historical_Context
+        ),
+        Percentile_Range = dplyr::recode(
+          Percentile_Range,
+          "> 95th"    = "> 95e",
+          "90th-95th" = "90e–95e",
+          "75th-90th" = "75e–90e",
+          "50th-75th" = "50e–75e",
+          "25th-50th" = "25e–50e",
+          "10th-25th" = "10e–25e",
+          "5th-10th"  = "5e–10e",
+          "< 5th"     = "< 5e",
+          "NA"        = "N/A",
+          .default    = Percentile_Range
+        ),
+        record_length_display = dplyr::case_when(
+          is.na(valid_years) | valid_years == 0 ~ "N/A",
+          valid_years == 1 ~ "1 an",
+          TRUE ~ paste0(valid_years, " ans")
+        )
+      )
+  } else{
+    summary_df <- summary_df %>%
+      dplyr::mutate(
+        record_length_display = dplyr::case_when(
+          is.na(valid_years) | valid_years == 0 ~ "N/A",
+          valid_years == 1 ~ "1 year",
+          TRUE ~ paste0(valid_years, " years")
+        )
+      )
+  }
+  summary_df
+}
+
+# Build HTML popup vector (one string per stn)
+build_summary_popup_content <- function(summary_df, texts) {
+  format_obs_time <- function(dt) {
+    if (is.na(dt)) return("N/A")
+    dt_utc <- dt
+    attr(dt_utc, "tzone") <- "UTC"
+    dt_mt <- lubridate::with_tz(dt_utc, "America/Edmonton")
+    format(dt_mt, "%Y-%m-%d %H:%M %Z")
+  }
+
+  paste0(
+    "<div style='font-family: Arial, sans-serif;'>",
+    "<div class='metadata-header'>", summary_df$formatted_name, "</div>",
+    "<table class='metadata-table'>",
+    "<tr><td>", texts$popup$station_number, ":</td><td>",
+    ifelse(is.na(summary_df$STATION_NUMBER), "N/A", summary_df$STATION_NUMBER), "</td></tr>",
+    "<tr><td>", texts$popup$current_level, ":</td><td>",
+    ifelse(is.na(summary_df$Current_Level), "N/A",
+           paste0(round(summary_df$Current_Level, 2), " m")), "</td></tr>",
+    "<tr><td>", texts$popup$obs_time, ":</td><td>",
+    ifelse(is.na(summary_df$Date), "N/A",
+           sapply(summary_df$Date, format_obs_time)), "</td></tr>",
+    "<tr><td>", texts$popup$historical_context, ":</td><td>",
+    summary_df$Historical_Context, "</td></tr>",
+    "<tr><td>", texts$popup$percentile_range, ":</td><td>",
+    summary_df$Percentile_Range, "</td></tr>",
+    ifelse(!is.na(summary_df$hist_mean),
+           paste0("<tr><td>", texts$popup$historical_mean, ":</td><td>",
+                  round(summary_df$hist_mean, 2), " m</td></tr>"), ""),
+    "<tr><td>", texts$popup$record_length, ":</td><td>",
+    summary_df$record_length_display, "</td></tr>",
+    "<tr><td>", texts$popup$drainage_area, ":</td><td>",
+    ifelse(is.na(summary_df$DRAINAGE_AREA_GROSS), "N/A",
+           paste0(summary_df$DRAINAGE_AREA_GROSS, " km²")), "</td></tr>",
+    "</table>",
+    "</div>"
+  )
+}
+
+# DownloadModule
+# Function to create disclaimer content
 create_disclaimer_content <- function(lang) {
   if(lang == "fr") {
     HTML("
@@ -129,7 +291,7 @@ create_disclaimer_content <- function(lang) {
           <li><span class='flag-link' id='show_column_names'>Noms de colonnes</span> - explication des en-têtes de colonnes inclus dans les données téléchargeables.</li>
           <li><span class='flag-link' id='show_station_info'>Information des stations</span> - descriptions des champs de métadonnées des stations.</li>
         </ul>
-      <p style='margin-top: 12px; font-size: 14px;'>Ces documents de référence sont offerts pour une consultation rapide dans cet Explorateur; les données peuvent aussi être téléchargées à partir de la <a href='https://www.canada.ca/en/environment-climate-change/services/water-overview/quantity/monitoring/survey/data-products-services/national-archive-hydat.html' target='_blank'>base de données HYDAT du RHC</a> pour une utilisation hors ligne.</p>
+      <p style='margin-top: 12px; font-size: 14px;'>Ces documents de référence sont offerts pour une consultation rapide dans cet Explorateur; les données peuvent aussi être téléchargées à partir de la <a href='https://www.canada.ca/fr/environnement-changement-climatique/services/eau-apercu/volume/surveillance/releves/produits-donnees-services/archives-nationales-hydat.html' target='_blank'>base de données HYDAT du RHC</a> pour une utilisation hors ligne.</p>
         <h5 style='font-weight: bold; font-size: 16px; margin-top: 15px; margin-bottom: 10px;'>Autres publications</h5>
                 <h5>Des valeurs résumées, des graphiques et une interprétation figurent dans les Aperçu des niveaux d’eau printaniers et les Bulletins mensuels sur la surveillance des eau publiés par le GTNO–ECC.</h5>
             <ul>
@@ -189,24 +351,25 @@ create_hydro_column_modal_content <- function(lang) {
                                               )
                                             ),
                                             tags$tbody(
-                                              tags$tr(tags$td("JD"), tags$td("")),
-                                              tags$tr(tags$td("STATION_NAME"), tags$td("")),
+                                              tags$tr(tags$td("DayofYear"), tags$td("Jour de l'année (JOA); numéro séquentiel du jour dans l'année (1 à 365; 366 les années bissextiles)")),
+                                              tags$tr(tags$td("STATION_NAME"), tags$td("Nom de la station attribué par les Relevés hydrologiques du Canada (RHC)")),
                                               tags$tr(tags$td("Date"), tags$td("format AAAA-MM-JJ.")),
-                                              tags$tr(tags$td("valeur"), tags$td("")),
+                                              tags$tr(tags$td("Parameter"), tags$td("« Flow » (débit) ou « Level » (niveau d'eau).")),
+                                              tags$tr(tags$td("valeur"), tags$td("Valeur mesurée")),
                                               tags$tr(tags$td("symbol"), tags$td("")),
                                               tags$tr(tags$td("type_donnee"), tags$td("")),
-                                              tags$tr(tags$td("annee"), tags$td("AAAA")),
-                                              tags$tr(tags$td("Max"), tags$td("")),
-                                              tags$tr(tags$td("Min"), tags$td("")),
-                                              tags$tr(tags$td("Median"), tags$td("")),
-                                              tags$tr(tags$td("Moyenne"), tags$td("")),
-                                              tags$tr(tags$td("P95"), tags$td("")),
-                                              tags$tr(tags$td("P90"), tags$td("")),
-                                              tags$tr(tags$td("P75"), tags$td("")),
-                                              tags$tr(tags$td("P50"), tags$td("")),
-                                              tags$tr(tags$td("P25"), tags$td("")),
-                                              tags$tr(tags$td("P10"), tags$td("")),
-                                              tags$tr(tags$td("P05"), tags$td(""))
+                                              tags$tr(tags$td("annee"), tags$td("Format AAAA")),
+                                              tags$tr(tags$td("Max"), tags$td("Valeur quotidienne maximale enregistrée à cette station pour ce jour de l'année.")),
+                                              tags$tr(tags$td("Min"), tags$td("Valeur quotidienne minimale enregistrée à cette station pour ce jour de l'année.")),
+                                              tags$tr(tags$td("Median"), tags$td("Valeur quotidienne médiane enregistrée à cette station pour ce jour de l'année.")),
+                                              tags$tr(tags$td("Moyenne"), tags$td("Valeur quotidienne moyenne enregistrée à cette station pour ce jour de l'année.")),
+                                              tags$tr(tags$td("P95"), tags$td("95e percentile pour ce JOA (seulement 5 % des valeurs historiques étaient supérieures).")),
+                                              tags$tr(tags$td("P90"), tags$td("90e percentile pour ce JOA (seulement 10 % des valeurs historiques étaient supérieures).")),
+                                              tags$tr(tags$td("P75"), tags$td("75e percentile pour ce JOA (25 % des valeurs historiques étaient supérieures).")),
+                                              tags$tr(tags$td("P50"), tags$td("50e percentile pour ce JOA (la moitié des valeurs historiques étaient supérieures et l'autre moitié inférieures).")),
+                                              tags$tr(tags$td("P25"), tags$td("25e percentile pour ce JOA (75 % des valeurs historiques étaient supérieures).")),
+                                              tags$tr(tags$td("P10"), tags$td("10e percentile pour ce JOA (90 % des valeurs historiques étaient supérieures).")),
+                                              tags$tr(tags$td("P05"), tags$td("5e percentile pour ce JOA (seulement 95 % des valeurs historiques étaient supérieures)."))
                                             )
                                  )
                         )
@@ -280,15 +443,15 @@ create_station_modal_content <- function(lang) {
                                               )
                                             ),
                                             tags$tbody(
-                                              tags$tr(tags$td("station_number"), tags$td("")),
-                                              tags$tr(tags$td("station_name"), tags$td("")),
-                                              tags$tr(tags$td("latitude / longitude"), tags$td("")),
-                                              tags$tr(tags$td("drainage_area_km2"), tags$td("")),
-                                              tags$tr(tags$td("operation_schedule"), tags$td("")),
-                                              tags$tr(tags$td("regulated"), tags$td("")),
-                                              tags$tr(tags$td("station_status"), tags$td("")),
-                                              tags$tr(tags$td("province_territory"), tags$td("")),
-                                              tags$tr(tags$td("datum"), tags$td(""))
+                                              tags$tr(tags$td("station_number"), tags$td("Numéro de station des Relevés hydrologiques du Canada (p. ex., 07OB001).")),
+                                              tags$tr(tags$td("station_name"), tags$td("Nom de la station attribué par les Relevés hydrologiques du Canada (RHC)")),
+                                              tags$tr(tags$td("latitude / longitude"), tags$td("Coordonnées géographiques de la station en degrés décimaux")),
+                                              tags$tr(tags$td("drainage_area_km2"), tags$td("Superficie brute du bassin versant en amont de la station (km²)")),
+                                              tags$tr(tags$td("operation_schedule"), tags$td("« Continuous » (Continue) pour une surveillance à l'année; « Seasonal » (Saisonnière) pour les eaux libres seulement.")),
+                                              tags$tr(tags$td("regulated"), tags$td("« Regulated » (Réglementé) si le débit est contrôlé par un barrage ou une dérivation; « natural » (naturel) sinon.")),
+                                              tags$tr(tags$td("station_status"), tags$td("« Active » si la station est en service; « discontinued » (Discontinuée) si elle n'est plus en exploitation")),
+                                              tags$tr(tags$td("province_territory"), tags$td("Province ou territoire ou se trouve la station")),
+                                              tags$tr(tags$td("datum"), tags$td("Référence d'élévation utilisée pour les mesures de niveau d'eau à la station"))
                                             )
 
                                  )
@@ -334,6 +497,164 @@ create_station_modal_content <- function(lang) {
   }
 }
 
+# MetadataModule
+# Prep table for popup display (translate select column values)
+meta_df_display <- function(meta_df, lang) {
+  if (lang == "fr") {
+    meta_df <- meta_df %>% dplyr::mutate(
+      variables_measured = dplyr::recode(
+        variables_measured,
+        "Flow and Level" = "Débit et niveau d'eau",
+        "Flow"           = "Débit",
+        "Level"          = "Niveau d'eau",
+        "Unknown"        = "Inconnu",
+        .default = variables_measured
+      ),
+      Q_Operation = dplyr::recode(
+        as.character(Q_Operation),
+        "Continuous" = "Continue",
+        "Seasonal"   = "Saisonnière",
+        .default = as.character(Q_Operation)
+      ),
+      H_Operation = dplyr::recode(
+        as.character(H_Operation),
+        "Continuous" = "Continue",
+        "Seasonal"   = "Saisonnière",
+        .default = as.character(H_Operation)
+      ),
+      REAL_TIME = ifelse(
+        is.na(REAL_TIME),
+        NA_character_,
+        ifelse(isTRUE(REAL_TIME), "Oui", "Non")
+      )
+    )
+  } else {
+    meta_df <- meta_df %>% dplyr::mutate(
+      Q_Operation = as.character(Q_Operation),
+      H_Operation = as.character(H_Operation),
+      REAL_TIME = ifelse(
+        is.na(REAL_TIME),
+        NA_character_,
+        ifelse(isTRUE(REAL_TIME), "TRUE", "FALSE")
+      )
+    )
+  }
+  meta_df
+}
+
+# Build HTML popup vector (one string per stn)
+build_meta_popup_content <- function(meta_df, texts) {
+  paste0(
+    "<div style='font-family: Arial, sans-serif;'>",
+    "<div class='metadata-header'>", meta_df$formatted_name, "</div>",
+    "<table class='metadata-table'>",
+    "<tr><td>", texts$popup$station_number, ":</td><td>",
+    ifelse(is.na(meta_df$STATION_NUMBER), "N/A", meta_df$STATION_NUMBER), "</td></tr>",
+    "<tr><td>", texts$popup$variables_measured, ":</td><td>",
+    ifelse(is.na(meta_df$variables_measured), "N/A", meta_df$variables_measured), "</td></tr>",
+    ifelse(
+      meta_df$has_flow,
+      paste0(
+        "<tr><td>", texts$popup$flow_date_range, ":</td><td>",
+        ifelse(
+          is.na(meta_df$Q_date_range),
+          "N/A",
+          paste0(
+            meta_df$Q_date_range, " (",
+            ifelse(
+              is.na(meta_df$Q_data_coverage_pct),
+              "N/A",
+              ifelse(
+                meta_df$Q_data_coverage_pct >= 100,
+                ">80%",
+                paste0(meta_df$Q_data_coverage_pct, "%")
+              )
+            ),
+            ")"
+          )
+        ),
+        "</td></tr>"
+      ),
+      ""
+    ),
+    ifelse(
+      meta_df$has_level,
+      paste0(
+        "<tr><td>", texts$popup$level_date_range, ":</td><td>",
+        ifelse(
+          is.na(meta_df$H_date_range),
+          "N/A",
+          paste0(
+            meta_df$H_date_range, " (",
+            ifelse(
+              is.na(meta_df$H_data_coverage_pct),
+              "N/A",
+              ifelse(
+                meta_df$H_data_coverage_pct >= 100,
+                ">80%",
+                paste0(meta_df$H_data_coverage_pct, "%")
+              )
+            ),
+            ")"
+          )
+        ),
+        "</td></tr>"
+      ),
+      ""
+    ),
+    ifelse(
+      (!is.na(meta_df$Q_Operation) & !is.na(meta_df$H_Operation) & meta_df$Q_Operation == meta_df$H_Operation) |
+        (!is.na(meta_df$Q_Operation) & is.na(meta_df$H_Operation) & meta_df$has_flow) |
+        (is.na(meta_df$Q_Operation) & !is.na(meta_df$H_Operation) & meta_df$has_level),
+      ifelse(
+        !is.na(meta_df$Q_Operation),
+        paste0("<tr><td>", texts$popup$operation_schedule, ":</td><td>", meta_df$Q_Operation, "</td></tr>"),
+        ifelse(
+          !is.na(meta_df$H_Operation),
+          paste0("<tr><td>", texts$popup$operation_schedule, ":</td><td>", meta_df$H_Operation, "</td></tr>"),
+          ""
+        )
+      ),
+      paste0(
+        ifelse(
+          meta_df$has_flow & !is.na(meta_df$Q_Operation),
+          paste0("<tr><td>", texts$popup$flow_operation, ":</td><td>", meta_df$Q_Operation, "</td></tr>"),
+          ""
+        ),
+        ifelse(
+          meta_df$has_level & !is.na(meta_df$H_Operation),
+          paste0("<tr><td>", texts$popup$level_operation, ":</td><td>", meta_df$H_Operation, "</td></tr>"),
+          ""
+        )
+      )
+    ),
+    "<tr><td>", texts$popup$longitude, ":</td><td>",
+    ifelse(
+      is.na(sf::st_coordinates(meta_df)[, 1]),
+      "N/A",
+      as.character(round(sf::st_coordinates(meta_df)[, 1], 4))
+    ),
+    "</td></tr>",
+    "<tr><td>", texts$popup$latitude, ":</td><td>",
+    ifelse(
+      is.na(sf::st_coordinates(meta_df)[, 2]),
+      "N/A",
+      as.character(round(sf::st_coordinates(meta_df)[, 2], 4))
+    ),
+    "</td></tr>",
+    "<tr><td>", texts$popup$drainage_area, ":</td><td>",
+    ifelse(
+      is.na(meta_df$DRAINAGE_AREA_GROSS),
+      "N/A",
+      paste0(meta_df$DRAINAGE_AREA_GROSS, " km²")
+    ),
+    "</td></tr>",
+    "<tr><td>", texts$popup$real_time, ":</td><td>",
+    ifelse(is.na(meta_df$REAL_TIME), "N/A", meta_df$REAL_TIME), "</td></tr>",
+    "</table>",
+    "</div>"
+  )
+}
 
 ##
 ##

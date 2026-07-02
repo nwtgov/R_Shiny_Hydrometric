@@ -1,4 +1,3 @@
-
 # summary map
 # UI
 summaryUI <- function(id) {
@@ -85,10 +84,19 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
     # Hide map loading spinner once the map finishes rendering
     ns <- session$ns
+
+    # add spinner waiter for map loading or if lang changes
+    observeEvent(language(), {
+      shinyjs::runjs(sprintf("$('#%s').show();", ns("map_loading")))
+      shinyjs::runjs(sprintf(
+        "setTimeout(function(){ $('#%s').fadeOut(300); }, 12000);",
+        ns("map_loading")
+      ))
+    }, ignoreInit = TRUE)
+
     observeEvent(input$summary_map_bounds, {
       shinyjs::runjs(sprintf("$('#%s').fadeOut(300);", ns("map_loading")))
-    }, once = TRUE)
-
+    })
 
     # load shapefiles - failsafe if preload fails
     if (!is.null(preloaded_data()$mackenzie_basin)) {
@@ -151,7 +159,6 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
 
     map_text <- reactive({
-      #print(paste("map_text() RUNNING - language:", language(), "snow_year:", input$snow_year, "at", Sys.time()))
       req(language())
       if(language() == "fr") {
         list(
@@ -176,7 +183,13 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             esri = "Carte Satellite"
           ),
           legend = list(
-            title = paste0("Niveaux d'eau en temps réel")
+            title = "Niveaux d'eau en temps réel",
+            well_above = "Bien supérieur à la moyenne",
+            above = "Supérieur à la moyenne",
+            average = "Près de la moyenne",
+            below = "Inférieur à la moyenne",
+            well_below = "Bien inférieur à la moyenne",
+            na = "N/A"
           ),
           popup = list(
             station_name = "Nom de la station",
@@ -213,7 +226,13 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             esri = "Satellite Map"
           ),
           legend = list(
-            title = paste0("Current water levels")
+            title = "Current water levels",
+            well_above = "Well above average",
+            above = "Above average",
+            average = "Average",
+            below = "Below average",
+            well_below = "Well below average",
+            na = "N/A"
           ),
           popup = list(
             station_name = "Station Name",
@@ -333,12 +352,12 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       )
     })
 
-    # display consistent legend bins
-    all_legend_bins <- factor(
-      c("Well below average", "Below average", "Average", "Above average", "Well above average", "NA"),
-      levels = c("Well below average", "Below average", "Average", "Above average", "Well above average", "NA"),
-      ordered = TRUE
-    )
+    # # display consistent legend bins
+    # all_legend_bins <- factor(
+    #   c("Well below average", "Below average", "Average", "Above average", "Well above average", "NA"),
+    #   levels = c("Well below average", "Below average", "Average", "Above average", "Well above average", "NA"),
+    #   ordered = TRUE
+    # )
 
     # Render map
     output$summary_map <- renderLeaflet({
@@ -346,9 +365,15 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       req(color_palette())
       req(map_text())
 
-      context_data <- stations_with_context()
+      #context_data <- stations_with_context()
       pal <- color_palette()
-      map_text <- isolate(map_text())
+      #texts <- isolate(map_text())
+      context_data <- stations_with_context()
+      texts <- isolate(map_text())
+      popup_df <- summary_df_display(context_data, language())
+      popup_content <- build_summary_popup_content(popup_df, texts)
+
+      # markers still use context_data + pal(context_data$Historical_Context)
 
       # check for valis data:
       if (is.null(context_data) || nrow(context_data) == 0) {
@@ -376,63 +401,63 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
                  setView(lng = -123, lat = 63.7, zoom = 4))
       }
 
-      # format record length w singular/plural
-      format_record_length <- function(years) {
-        dplyr::case_when(
-          is.na(years) | years == 0 ~ "N/A",
-          years == 1 ~ "1 year",
-          TRUE ~ paste0(years, " years")
-        )
-      }
+      # # format record length w singular/plural
+      # format_record_length <- function(years) {
+      #   dplyr::case_when(
+      #     is.na(years) | years == 0 ~ "N/A",
+      #     years == 1 ~ "1 year",
+      #     TRUE ~ paste0(years, " years")
+      #   )
+      # }
 
-      # format timestamp of most recent observation
-      format_obs_time <- function(dt) {
-        if (is.na(dt)) return("N/A")
-        dt_utc <- dt
-        attr(dt_utc, "tzone") <- "UTC"  # treat source timestamp as UTC
-        dt_mt <- lubridate::with_tz(dt_utc, "America/Edmonton")
-        format(dt_mt, "%Y-%m-%d %H:%M %Z")
-      }
+      # # format timestamp of most recent observation
+      # format_obs_time <- function(dt) {
+      #   if (is.na(dt)) return("N/A")
+      #   dt_utc <- dt
+      #   attr(dt_utc, "tzone") <- "UTC"  # treat source timestamp as UTC
+      #   dt_mt <- lubridate::with_tz(dt_utc, "America/Edmonton")
+      #   format(dt_mt, "%Y-%m-%d %H:%M %Z")
+      # }
 
-
-      # Create popup content
-      popup_content <- paste0(
-        "<div style='font-family: Arial, sans-serif;'>",
-        "<div class='metadata-header'>", context_data$formatted_name, "</div>",
-        "<table class='metadata-table'>",
-        "<tr><td>", map_text()$popup$station_number, ":</td><td>", context_data$STATION_NUMBER, "</td></tr>",
-        "<tr><td>", map_text()$popup$current_level, ":</td><td>",ifelse(is.na(context_data$Current_Level), "N/A",paste0(round(context_data$Current_Level, 2), " m")), "</td></tr>",
-        "<tr><td>", map_text()$popup$obs_time, ":</td><td>", ifelse(is.na(context_data$Date), "N/A", sapply(context_data$Date, format_obs_time)), "</td></tr>",
-        "<tr><td>", map_text()$popup$historical_context, ":</td><td>",context_data$Historical_Context, "</td></tr>",
-        "<tr><td>", map_text()$popup$percentile_range, ":</td><td>",context_data$Percentile_Range, "</td></tr>",
-        ifelse(!is.na(context_data$hist_mean),
-               paste0("<tr><td>", map_text()$popup$historical_mean, ":</td><td>",round(context_data$hist_mean, 2), " m</td></tr>"), ""),
-        "<tr><td>", map_text()$popup$record_length, ":</td><td>",format_record_length(context_data$valid_years), "</td></tr>",
-        "<tr><td>", map_text()$popup$drainage_area, ":</td><td>",ifelse(is.na(context_data$DRAINAGE_AREA_GROSS), "N/A", paste0(context_data$DRAINAGE_AREA_GROSS, " km²")), "</td></tr>",
-        "</table>",
-        "</div>"
-      )
+      #
+      # # Create popup content
+      # popup_content <- paste0(
+      #   "<div style='font-family: Arial, sans-serif;'>",
+      #   "<div class='metadata-header'>", context_data$formatted_name, "</div>",
+      #   "<table class='metadata-table'>",
+      #   "<tr><td>", texts$popup$station_number, ":</td><td>", context_data$STATION_NUMBER, "</td></tr>",
+      #   "<tr><td>", texts$popup$current_level, ":</td><td>",ifelse(is.na(context_data$Current_Level), "N/A",paste0(round(context_data$Current_Level, 2), " m")), "</td></tr>",
+      #   "<tr><td>", texts$popup$obs_time, ":</td><td>", ifelse(is.na(context_data$Date), "N/A", sapply(context_data$Date, format_obs_time)), "</td></tr>",
+      #   "<tr><td>", texts$popup$historical_context, ":</td><td>",context_data$Historical_Context, "</td></tr>",
+      #   "<tr><td>", texts$popup$percentile_range, ":</td><td>",context_data$Percentile_Range, "</td></tr>",
+      #   ifelse(!is.na(context_data$hist_mean),
+      #          paste0("<tr><td>", texts$popup$historical_mean, ":</td><td>",round(context_data$hist_mean, 2), " m</td></tr>"), ""),
+      #   "<tr><td>", texts$popup$record_length, ":</td><td>",format_record_length(context_data$valid_years), "</td></tr>",
+      #   "<tr><td>", texts$popup$drainage_area, ":</td><td>",ifelse(is.na(context_data$DRAINAGE_AREA_GROSS), "N/A", paste0(context_data$DRAINAGE_AREA_GROSS, " km²")), "</td></tr>",
+      #   "</table>",
+      #   "</div>"
+      # )
       leaflet() %>%
         addTiles() %>%
         setView(lng = -123, lat = 63.7, zoom = 4) %>%
-        addProviderTiles(providers$CartoDB.Positron, group = map_text()$base_maps$cartodb) %>%
-        addProviderTiles(providers$Esri.WorldImagery, group = map_text()$base_maps$esri) %>%
+        addProviderTiles(providers$CartoDB.Positron, group = texts$base_maps$cartodb) %>%
+        addProviderTiles(providers$Esri.WorldImagery, group = texts$base_maps$esri) %>%
         addPolylines(data = nwt_boundary, weight = 2, color = "#000000", opacity = 0.8,
-                     group = map_text()$basins$nwt_boundary) %>%
+                     group = texts$basins$nwt_boundary) %>%
         addPolylines(data = mackenzie_basin, weight = 2, color = "#888888", opacity = 0.8,
-                     group = map_text()$basins$mackenzie) %>%
+                     group = texts$basins$mackenzie) %>%
         addPolylines(data = slave, weight = 2, color = "#999999", opacity = 0.8,
-                     group = map_text()$basins$slave) %>%
+                     group = texts$basins$slave) %>%
         addPolylines(data = snare, weight = 2, color = "#999999", opacity = 0.8,
-                     group = map_text()$basins$snare) %>%
+                     group = texts$basins$snare) %>%
         addPolylines(data = YKriver, weight = 2, color = "#999999", opacity = 0.8,
-                     group = map_text()$basins$YKriver) %>%
+                     group = texts$basins$YKriver) %>%
         addPolylines(data = peel, weight = 2, color = "#999999", opacity = 0.8,
-                     group = map_text()$basins$peel) %>%
+                     group = texts$basins$peel) %>%
         addPolylines(data = hay, weight = 2, color = "#999999", opacity = 0.8,
-                     group = map_text()$basins$hay) %>%
+                     group = texts$basins$hay) %>%
         addPolylines(data = liard, weight = 2, color = "#999999", opacity = 0.8,
-                     group = map_text()$basins$liard) %>%
+                     group = texts$basins$liard) %>%
         addCircleMarkers(
           lng = coords[, 1],
           lat = coords[, 2],
@@ -447,22 +472,36 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
           popupOptions = popupOptions(autoPan = TRUE)
         ) %>%
         addLayersControl(
-          overlayGroups = c(map_text()$basins$nwt_boundary, map_text()$basins$mackenzie,
-                            map_text()$basins$slave, map_text()$basins$snare,
-                            map_text()$basins$YKriver, map_text()$basins$liard,
-                            map_text()$basins$peel, map_text()$basins$hay),
-          baseGroups = c(map_text()$base_maps$cartodb, map_text()$base_maps$esri),
+          overlayGroups = c(texts$basins$nwt_boundary, texts$basins$mackenzie,
+                            texts$basins$slave, texts$basins$snare,
+                            texts$basins$YKriver, texts$basins$liard,
+                            texts$basins$peel, texts$basins$hay),
+          baseGroups = c(texts$base_maps$cartodb, texts$base_maps$esri),
           options = layersControlOptions(collapsed = TRUE)
         ) %>%
         addLegend(
           position = "bottomright",
-          pal = pal,
-          values = all_legend_bins,
-          title = map_text()$legend$title,
+          colors = c(
+            "#3399FF",  # Well above average
+            "#99CCFF",  # Above average
+            "#FFE6B3",  # Average
+            "#FFB3B3",  # Below average
+            "#FF6666",  # Well below average
+            "#CCCCCC"   # NA
+          ),
+          labels = c(
+            texts$legend$well_above,
+            texts$legend$above,
+            texts$legend$average,
+            texts$legend$below,
+            texts$legend$well_below,
+            texts$legend$na
+          ),
+          title = texts$legend$title,
           opacity = 1
         ) %>%
         addControl(
-          html = paste("<div style='padding: 0.5px; background-color: white; opacity: 0.6; border-radius: 0.5px; font-size: 10px;'>", map_text()$last_updated, "</div>"),
+          html = paste("<div style='padding: 0.5px; background-color: white; opacity: 0.6; border-radius: 0.5px; font-size: 10px;'>", texts$last_updated, "</div>"),
           position = "bottomleft",
           className = "last-updated-control"
         ) %>%
@@ -502,6 +541,11 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
     # track if sub-basins have been hidden
     sub_basins_hidden <- reactiveVal(FALSE)
+
+    observeEvent(language(), {
+      sub_basins_hidden(FALSE)
+    }, ignoreInit = TRUE)
+
 
     # hide sub-basins when map is first rendered
     observeEvent(input$summary_map_zoom, {
