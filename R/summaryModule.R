@@ -340,10 +340,6 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       context_levels <- names(colors)
       context_factor <- factor(context_data$Historical_Context, levels = context_levels)
 
-            # stations_with_context()$Historical_Context <- factor(
-      #   stations_with_context()$Historical_Context,
-      #   levels = context_levels
-      # )
 
       leaflet::colorFactor(
         palette = colors,
@@ -352,12 +348,6 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       )
     })
 
-    # # display consistent legend bins
-    # all_legend_bins <- factor(
-    #   c("Well below average", "Below average", "Average", "Above average", "Well above average", "NA"),
-    #   levels = c("Well below average", "Below average", "Average", "Above average", "Well above average", "NA"),
-    #   ordered = TRUE
-    # )
 
     # Render map
     output$summary_map <- renderLeaflet({
@@ -401,42 +391,6 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
                  setView(lng = -123, lat = 63.7, zoom = 4))
       }
 
-      # # format record length w singular/plural
-      # format_record_length <- function(years) {
-      #   dplyr::case_when(
-      #     is.na(years) | years == 0 ~ "N/A",
-      #     years == 1 ~ "1 year",
-      #     TRUE ~ paste0(years, " years")
-      #   )
-      # }
-
-      # # format timestamp of most recent observation
-      # format_obs_time <- function(dt) {
-      #   if (is.na(dt)) return("N/A")
-      #   dt_utc <- dt
-      #   attr(dt_utc, "tzone") <- "UTC"  # treat source timestamp as UTC
-      #   dt_mt <- lubridate::with_tz(dt_utc, "America/Edmonton")
-      #   format(dt_mt, "%Y-%m-%d %H:%M %Z")
-      # }
-
-      #
-      # # Create popup content
-      # popup_content <- paste0(
-      #   "<div style='font-family: Arial, sans-serif;'>",
-      #   "<div class='metadata-header'>", context_data$formatted_name, "</div>",
-      #   "<table class='metadata-table'>",
-      #   "<tr><td>", texts$popup$station_number, ":</td><td>", context_data$STATION_NUMBER, "</td></tr>",
-      #   "<tr><td>", texts$popup$current_level, ":</td><td>",ifelse(is.na(context_data$Current_Level), "N/A",paste0(round(context_data$Current_Level, 2), " m")), "</td></tr>",
-      #   "<tr><td>", texts$popup$obs_time, ":</td><td>", ifelse(is.na(context_data$Date), "N/A", sapply(context_data$Date, format_obs_time)), "</td></tr>",
-      #   "<tr><td>", texts$popup$historical_context, ":</td><td>",context_data$Historical_Context, "</td></tr>",
-      #   "<tr><td>", texts$popup$percentile_range, ":</td><td>",context_data$Percentile_Range, "</td></tr>",
-      #   ifelse(!is.na(context_data$hist_mean),
-      #          paste0("<tr><td>", texts$popup$historical_mean, ":</td><td>",round(context_data$hist_mean, 2), " m</td></tr>"), ""),
-      #   "<tr><td>", texts$popup$record_length, ":</td><td>",format_record_length(context_data$valid_years), "</td></tr>",
-      #   "<tr><td>", texts$popup$drainage_area, ":</td><td>",ifelse(is.na(context_data$DRAINAGE_AREA_GROSS), "N/A", paste0(context_data$DRAINAGE_AREA_GROSS, " km²")), "</td></tr>",
-      #   "</table>",
-      #   "</div>"
-      # )
       leaflet() %>%
         addTiles() %>%
         setView(lng = -123, lat = 63.7, zoom = 4) %>%
@@ -538,6 +492,9 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       }
     ")
     })
+
+
+    outputOptions(output, "summary_map", suspendWhenHidden = FALSE)
 
     # track if sub-basins have been hidden
     sub_basins_hidden <- reactiveVal(FALSE)

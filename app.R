@@ -839,37 +839,6 @@ server <- function(input, output, session) {
   # language toggle and tab preservation
   desired_tab <- reactiveVal(NULL)
 
-  # observeEvent(input$toggle_language, {
-  #   # Save current tab before language change
-  #   current_tab <- input$navbar
-  #   current_lang <- language()
-  #   if(current_lang == "en") {
-  #     language("fr")
-  #     tab_map <- list(
-  #       "About" = "À propos",
-  #       "Water Level Data" = "Données de niveau d'eau",
-  #       "Metadata" = "Métadonnées",
-  #       "Download Data" = "Télécharger",
-  #       "FAQ" = "FAQ"
-  #     )
-  #   } else {
-  #     language("en")
-  #     tab_map <- list(
-  #       "À propos" = "About",
-  #       "Données de niveau d'eau" = "Water Level Data",
-  #       "Métadonnées" = "Metadata",
-  #       "Télécharger" = "Download Data",
-  #       "FAQ" = "FAQ"
-  #     )
-  #   }
-  #   # Store desired tab name for after navbar re-renders
-  #   if(!is.null(current_tab) && current_tab %in% names(tab_map)) {
-  #     desired_tab(tab_map[[current_tab]])
-  #   } else {
-  #     desired_tab(NULL)
-  #   }
-  # }, ignoreInit = TRUE)
-
   observeEvent(input$toggle_language, {
     current_tab <- input$navbar
     current_lang <- language()
@@ -1092,7 +1061,8 @@ server <- function(input, output, session) {
         panel.style.display = 'none';
       });
     ")
-  })
+
+})
 
   # Track module initialization to prevent double initialization
   modules_initialized <- reactiveVal(FALSE)
