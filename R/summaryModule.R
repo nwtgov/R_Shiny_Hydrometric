@@ -108,6 +108,13 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       peel <- preloaded_data()$peel
       hay <- preloaded_data()$hay
       liard <- preloaded_data()$liard
+      lamartre <- preloaded_data()$lamartre
+      willow <- preloaded_data()$willow
+      camsell <- preloaded_data()$camsell
+      greatbear <- preloaded_data()$greatbear
+      arcticred <- preloaded_data()$arcticred
+      hareind <- preloaded_data()$hareind
+      taltson <- preloaded_data()$taltson
     } else {
       nwt_boundary <- load_github_rdsshp("NWT_ENR_BND_FND.rds")
       mackenzie_basin <- load_github_rdsshp("MackenzieRiverBasin_FDA.rds")
@@ -117,6 +124,13 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       peel <- load_github_rdsshp("10MC002_DrainageBasin_BassinDeDrainage.rds")
       hay <- load_github_rdsshp("07OB001_DrainageBasin_BassinDeDrainage.rds")
       liard <- load_github_rdsshp("10ED002_DrainageBasin_BassinDeDrainage.rds")
+      lamartre <- load_github_rdsshp("07TA001_DrainageBasin_BassinDeDrainage.rds")
+      willow <- load_github_rdsshp("10GB006_DrainageBasin_BassinDeDrainage.rds")
+      camsell <- load_github_rdsshp("10JA002_DrainageBasin_BassinDeDrainage.rds")
+      greatbear <- load_github_rdsshp("10JC003_DrainageBasin_BassinDeDrainage.rds")
+      arcticred <- load_github_rdsshp("10LA002_DrainageBasin_BassinDeDrainage.rds")
+      hareind <- load_github_rdsshp("10LD004_DrainageBasin_BassinDeDrainage.rds")
+      taltson <- load_github_rdsshp("07QA001_DrainageBasin_BassinDeDrainage.rds")
     }
 
     # Get current day of year
@@ -176,7 +190,14 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             YKriver = "Bassin de la rivière Yellowknife",
             peel = "Bassin de la rivière Peel",
             hay = "Bassin de la rivière au Foin",
-            liard = "Bassin de la rivière Liard"
+            liard = "Bassin de la rivière Liard",
+            lamartre = "Bassin de la rivière La Martre",
+            willow = "Bassin de la rivière Willowlake",
+            camsell = "Bassin de la rivière Camsell",
+            greatbear = "Bassin du lac Great Bear",
+            arcticred = "Bassin de la rivière Arctic Red",
+            hareind = "Bassin de la rivière Hare Indian",
+            taltson = "Bassin de la rivière Taltson"
           ),
           base_maps = list(
             cartodb = "Carte Simple",
@@ -184,11 +205,13 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
           ),
           legend = list(
             title = "Niveaux d'eau en temps réel",
+            extremely_high = "Extrêmement élevé",
             well_above = "Bien supérieur à la moyenne",
             above = "Supérieur à la moyenne",
             average = "Près de la moyenne",
             below = "Inférieur à la moyenne",
             well_below = "Bien inférieur à la moyenne",
+            extremely_low = "Extrêmement bas",
             na = "N/A"
           ),
           popup = list(
@@ -219,7 +242,14 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             YKriver = "Yellowknife River Basin",
             peel = "Peel Basin",
             hay = "Hay Basin",
-            liard = "Liard Basin"
+            liard = "Liard Basin",
+            lamartre = "La Martre River Basin",
+            willow = "Willowlake Basin",
+            camsell = "Camsell River Basin",
+            greatbear = "Great Bear Lake Basin",
+            arcticred = "Arctic Red River Basin",
+            hareind = "Hare Indian River Basin",
+            taltson = "Taltson River Basin"
           ),
           base_maps = list(
             cartodb = "Simple Map",
@@ -227,11 +257,13 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
           ),
           legend = list(
             title = "Current water levels",
+            extremely_high = "Extremely high",
             well_above = "Well above average",
             above = "Above average",
             average = "Average",
             below = "Below average",
             well_below = "Well below average",
+            extremely_low = "Extremely low",
             na = "N/A"
           ),
           popup = list(
@@ -283,7 +315,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
           Current_Level = Value,
           Percentile_Range = dplyr::case_when(
             #valid_years < 6 ~ "NA",
-            #Current_Level > hist_max ~ "Above Max",
+            Current_Level > hist_max ~ "Above Max",
             Current_Level > hist_p95 ~ "> 95th",
             Current_Level > hist_p90 & Current_Level <= hist_p95 ~ "90th-95th",
             Current_Level > hist_p75 & Current_Level <= hist_p90 ~ "75th-90th",
@@ -292,16 +324,18 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
             Current_Level >= hist_p10 & Current_Level < hist_p25 ~ "10th-25th",
             Current_Level >= hist_p5 & Current_Level < hist_p10 ~ "5th-10th",
             Current_Level < hist_p5 ~ "< 5th",
-            #Current_Level < hist_min ~ "Below Min",
+            Current_Level < hist_min ~ "Below Min",
             TRUE ~ "NA"
           ),
           Historical_Context = dplyr::case_when(
             #valid_years < 6 ~ "NA",
-            Current_Level > hist_p90 ~ "Well above average",
+            Current_Level > hist_max ~ "Extremely high",
+            Current_Level > hist_p90 & Current_Level <= hist_max ~ "Well above average",
             Current_Level > hist_p75 & Current_Level <= hist_p90 ~ "Above average",
             Current_Level >= hist_p25 & Current_Level <= hist_p75 ~ "Average",
             Current_Level >= hist_p10 & Current_Level < hist_p25 ~ "Below average",
-            Current_Level < hist_p10 ~ "Well below average",
+            Current_Level >= hist_min & Current_Level < hist_p10 ~ "Well below average",
+            Current_Level < hist_min ~ "Extremely low",
             TRUE ~ "NA"
           )
         )
@@ -317,23 +351,41 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
 
     # Color palette based on Historical_Context
-    color_palette <- reactive({
+    colour_palette <- reactive({
       req(stations_with_context())
 
       context_data <- stations_with_context()
 
       # Define colors matching WL_change_table
       colors <- c(
-        "Well below average" = "#FF6666",      # Bright red
-        "Below average" = "#FFB3B3",       # Light red
-        #"Low" = "#FFD699",             # Light orange
-        "Average" = "#FFE6B3",   # Very light orange
-        #"Average" = "#E6E6E6",         # Light gray
-        #"Above Average" = "#B3D9FF",   # Very light blue
-        "Above average" = "#99CCFF",            # Light blue
-        #"Very High" = "#66B2FF",      # Medium blue
-        "Well above average" = "#3399FF",    # Bright blue
+
+        # NOTE - ALSO CHANGE addLegend section for colours
+
+        # v1 - Original palette
+        # "Well below average" = "#FF6666",      # Bright red
+        # "Below average" = "#FFB3B3",       # Light red
+        # "Average" = "#FFE6B3",   # Very light orange
+        # "Above average" = "#99CCFF",            # Light blue
+        # "Well above average" = "#3399FF",    # Bright blue
+        # "NA" = "#CCCCCC"               # Gray for no data
+
+        # v2 - new palette option a
+        "Extremely low" = "#D73027", # red
+        "Well below average" = "#FC8D59",      # orange
+        "Below average" = "#FEE090",       # dark yellow
+        "Average" = "#FFFFBF",          #light Yellow
+        "Above average" = "#E0F3F8",            # Light blue
+        "Well above average" = "#91BFDB",    # blue
+        "Extremely high" = "#4575B4",  # darker blue
         "NA" = "#CCCCCC"               # Gray for no data
+
+        # v3 - new palette option b
+        # "Well below average" = "#FC8D59",      # Red
+        # "Below average" = "#FEE090",       # Orange
+        # "Average" = "#FFFFBF",          #Yellow
+        # "Above average" = "#E0F3F8",            # Light blue
+        # "Well above average" = "#91BFDB",    # Bright blue
+        # "NA" = "#CCCCCC"               # Gray for no data
       )
 
       # Create factor with all levels
@@ -348,15 +400,14 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       )
     })
 
-
     # Render map
     output$summary_map <- renderLeaflet({
       req(stations_with_context())
-      req(color_palette())
+      req(colour_palette())
       req(map_text())
 
       #context_data <- stations_with_context()
-      pal <- color_palette()
+      pal <- colour_palette()
       #texts <- isolate(map_text())
       context_data <- stations_with_context()
       texts <- isolate(map_text())
@@ -368,9 +419,9 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       # check for valis data:
       if (is.null(context_data) || nrow(context_data) == 0) {
         # Return empty map if no data
-        return(leaflet() %>%
+        return(leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 0.5)) %>%
                  addTiles() %>%
-                 setView(lng = -123, lat = 63.7, zoom = 4))
+                 setView(lng = -123, lat = 64, zoom = 4.25))
       }
 
       # Get coordinates
@@ -378,22 +429,22 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
       if (is.null(coords) || nrow(coords) == 0) {
         cat("ERROR: coords is NULL or empty\n")
-        return(leaflet() %>%
+        return(leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 0.5)) %>%
                  addTiles() %>%
-                 setView(lng = -123, lat = 63.7, zoom = 4))
+                 setView(lng = -123, lat = 64, zoom = 4.25))
       }
 
       # Check if pal is valid
       if (is.null(pal)) {
         cat("ERROR: pal is NULL\n")
-        return(leaflet() %>%
+        return(leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 0.5)) %>%
                  addTiles() %>%
-                 setView(lng = -123, lat = 63.7, zoom = 4))
+                 setView(lng = -123, lat = 64, zoom = 4.25))
       }
 
-      leaflet() %>%
+      leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 0.5)) %>%
         addTiles() %>%
-        setView(lng = -123, lat = 63.7, zoom = 4) %>%
+        setView(lng = -123, lat = 64, zoom = 4.25) %>%
         addProviderTiles(providers$CartoDB.Positron, group = texts$base_maps$cartodb) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = texts$base_maps$esri) %>%
         addPolylines(data = nwt_boundary, weight = 2, color = "#000000", opacity = 0.8,
@@ -412,43 +463,106 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
                      group = texts$basins$hay) %>%
         addPolylines(data = liard, weight = 2, color = "#999999", opacity = 0.8,
                      group = texts$basins$liard) %>%
+        addPolylines(data = liard, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$liard) %>%
+        addPolylines(data = lamartre, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$lamartre) %>%
+        addPolylines(data = willow, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$willow) %>%
+        addPolylines(data = camsell, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$camsell) %>%
+        addPolylines(data = greatbear, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$greatbear) %>%
+        addPolylines(data = arcticred, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$arcticred) %>%
+        addPolylines(data = hareind, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$hareind) %>%
+        addPolylines(data = taltson, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$taltson) %>%
         addCircleMarkers(
           lng = coords[, 1],
           lat = coords[, 2],
-          radius = ifelse(is.na(context_data$Current_Level) | context_data$Historical_Context == "NA", 4, 5),
+          radius = 7,
           color = "black",
           fillColor = pal(context_data$Historical_Context),
           weight = 1,
           opacity = 0.8,
-          fillOpacity = ifelse(is.na(context_data$Current_Level) | context_data$Historical_Context == "NA", 0.3, 0.8),
+          fillOpacity = 0.8,
           label = context_data$formatted_name,
           popup = popup_content,
-          popupOptions = popupOptions(autoPan = TRUE)
+          popupOptions = popupOptions(autoPan = TRUE,
+                                      keepInView = TRUE)
         ) %>%
         addLayersControl(
-          overlayGroups = c(texts$basins$nwt_boundary, texts$basins$mackenzie,
-                            texts$basins$slave, texts$basins$snare,
-                            texts$basins$YKriver, texts$basins$liard,
-                            texts$basins$peel, texts$basins$hay),
+          overlayGroups = c(texts$basins$nwt_boundary,
+                            texts$basins$mackenzie,
+                            texts$basins$arcticred,
+                            texts$basins$camsell,
+                            texts$basins$greatbear,
+                            texts$basins$hareind,
+                            texts$basins$hay,
+                            texts$basins$lamartre,
+                            texts$basins$liard,
+                            texts$basins$peel,
+                            texts$basins$slave,
+                            texts$basins$snare,
+                            texts$basins$taltson,
+                            texts$basins$YKriver),
           baseGroups = c(texts$base_maps$cartodb, texts$base_maps$esri),
           options = layersControlOptions(collapsed = TRUE)
         ) %>%
+        hideGroup(c(
+          texts$basins$slave,
+          texts$basins$snare,
+          texts$basins$YKriver,
+          texts$basins$liard,
+          texts$basins$peel,
+          texts$basins$hay,
+          texts$basins$lamartre,
+          texts$basins$willow,
+          texts$basins$camsell,
+          texts$basins$greatbear,
+          texts$basins$arcticred,
+          texts$basins$hareind,
+          texts$basins$taltson
+        )) %>%
         addLegend(
           position = "bottomright",
           colors = c(
-            "#3399FF",  # Well above average
-            "#99CCFF",  # Above average
-            "#FFE6B3",  # Average
-            "#FFB3B3",  # Below average
-            "#FF6666",  # Well below average
+
+            # NOTE - PALETTE ALSO NEEDS TO BE CHANGED IN colour_palette
+
+            # v1 - Original palette
+            # "#3399FF",  # Well above average
+            # "#99CCFF",  # Above average
+            # "#FFE6B3",  # Average
+            # "#FFB3B3",  # Below average
+            # "#FF6666",  # Well below average
+            # "#CCCCCC"   # NA
+
+            # v2 - new palette option a
+            "#4575B4", # extremely high
+            "#91BFDB", # well above avg
+            "#E0F3F8", # above avg
+            "#FFFFBF", # avg
+            "#FEE090", # below avg
+            "#FC8D59", # well below avg
+            "#D73027", # extremely low
             "#CCCCCC"   # NA
+            #
+
+            # v3 - new palette option b
+            # "#91BFDB", # well above avg
+            # "#E0F3F8", # above avg
+            # "#FFFFBF", # avg
+            # "#FEE090", # below avg
+            # "#FC8D59", # well below avg
+            # "#CCCCCC"   # NA
+
+            # Hex codes for snow from Emma
+            # "#D73027", "#FC8D59", "#FEE090","#FFFFBF","#E0F3F8","#91BFDB", "#4575B4"
+
           ),
           labels = c(
+            texts$legend$extremely_high,
             texts$legend$well_above,
             texts$legend$above,
             texts$legend$average,
             texts$legend$below,
             texts$legend$well_below,
+            texts$legend$extremely_low,
             texts$legend$na
           ),
           title = texts$legend$title,
@@ -496,40 +610,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
 
     outputOptions(output, "summary_map", suspendWhenHidden = FALSE)
 
-    # track if sub-basins have been hidden
-    sub_basins_hidden <- reactiveVal(FALSE)
-
-    observeEvent(language(), {
-      sub_basins_hidden(FALSE)
-    }, ignoreInit = TRUE)
-
-
-    # hide sub-basins when map is first rendered
-    observeEvent(input$summary_map_zoom, {
-      if (!sub_basins_hidden()) {
-        req(map_text())
-
-        isolate({
-          map_text_val <- map_text()
-
-          tryCatch({
-            leafletProxy(session$ns("summary_map"), session) %>%
-              hideGroup(c(
-                map_text_val$basins$slave,
-                map_text_val$basins$snare,
-                map_text_val$basins$YKriver,
-                map_text_val$basins$liard,
-                map_text_val$basins$peel,
-                map_text_val$basins$hay
-              ))
-            sub_basins_hidden(TRUE)
-          }, error = function(e) {
-
-          })
-        })
-      }
-    }, once = TRUE)
-  })
+    })
 }
 
 ##

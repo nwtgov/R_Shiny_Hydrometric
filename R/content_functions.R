@@ -1,4 +1,3 @@
-
 # Content functions for Hydrometric App
 
 # AboutModule
@@ -101,7 +100,6 @@ create_about_content <- function(lang) {
 }
 
 # Function for footer links
-
 gnwt_footer_graphic <- function() {
   tags$div(
     class = "site-footer__graphic",
@@ -117,7 +115,7 @@ gnwt_footer_graphic <- function() {
 gnwt_footer_links <- function(lang = "en") {
   links <- if (lang == "fr") {
     list(
-      phone        = c("Répertoire téléphonique", "http://rdirectory.gov.nt.ca/rDirectory.aspx"),
+      phone        = c("Répertoire", "http://rdirectory.gov.nt.ca/rDirectory.aspx"),
       terms        = c("Modalités d'utilisation", "https://www.gov.nt.ca/en/terms"),
       accessibility = c("Accessibilité", "https://www.gov.nt.ca/accessibility/"),
       contact      = c("Contact", "https://www.gov.nt.ca/contact-gnwt"),
@@ -146,7 +144,6 @@ gnwt_footer_links <- function(lang = "en") {
   )
 }
 
-
 gnwt_footer_branding <- function(lang = "en") {
   if (lang == "fr") {
     line_small <- "Gouvernement des"
@@ -167,6 +164,27 @@ gnwt_footer_branding <- function(lang = "en") {
   )
 }
 
+# new fun for navbar to match open gov website
+gnwt_navbar_wordmark <- function(lang = "en") {
+  if (lang == "fr") {
+    line_small <- "Gouvernement des"
+    line_large <- "Territoires du Nord-Ouest"
+  } else {
+    line_small <- "Government of"
+    line_large <- "Northwest Territories"
+  }
+
+  # separate wordmark tag for EN and FR
+  tags$div(
+    class = paste(
+      "navbar-gnwt-brand",
+      if (lang == "fr") "navbar-gnwt-brand--fr" else "navbar-gnwt-brand--en"
+    ),
+    tags$div(class = "navbar-gnwt-brand-line navbar-gnwt-brand-line--small", line_small),
+    tags$div(class = "navbar-gnwt-brand-line navbar-gnwt-brand-line--large", line_large)
+  )
+}
+
 gnwt_footer_ui <- function(lang = "en") {
   tags$footer(
     class = "site-footer tab-footer-curve-stack",
@@ -182,10 +200,6 @@ gnwt_footer_ui <- function(lang = "en") {
   )
 }
 
-footer_curve_ui <- function(lang = "en") {
-  gnwt_footer_ui(lang)
-}
-
 # SummaryModule
 #Prep table for popup display (translate select column values)
 summary_df_display <- function(summary_df, lang) {
@@ -196,11 +210,13 @@ summary_df_display <- function(summary_df, lang) {
       dplyr::mutate(
         Historical_Context = dplyr::recode(
           Historical_Context,
+          "Extremely high"     = "Extrêmement élevé",
           "Well above average" = "Bien supérieur à la moyenne",
           "Above average"      = "Supérieur à la moyenne",
           "Average"            = "Près de la moyenne",
           "Below average"      = "Inférieur à la moyenne",
           "Well below average" = "Bien inférieur à la moyenne",
+          "Extremely low"      = "Extrêmement bas",
           "NA"                 = "N/A",
           .default             = Historical_Context
         ),
@@ -247,7 +263,7 @@ build_summary_popup_content <- function(summary_df, texts) {
   }
 
   paste0(
-    "<div style='font-family: Arial, sans-serif;'>",
+    "<div style='font-family: 'Noto Sans', sans-serif;'>",
     "<div class='metadata-header'>", summary_df$formatted_name, "</div>",
     "<table class='metadata-table'>",
     "<tr><td>", texts$popup$station_number, ":</td><td>",
@@ -545,7 +561,7 @@ meta_df_display <- function(meta_df, lang) {
 # Build HTML popup vector (one string per stn)
 build_meta_popup_content <- function(meta_df, texts) {
   paste0(
-    "<div style='font-family: Arial, sans-serif;'>",
+    "<div style='font-family: 'Noto Sans', sans-serif;'>",
     "<div class='metadata-header'>", meta_df$formatted_name, "</div>",
     "<table class='metadata-table'>",
     "<tr><td>", texts$popup$station_number, ":</td><td>",
@@ -655,6 +671,8 @@ build_meta_popup_content <- function(meta_df, texts) {
     "</div>"
   )
 }
+
+
 
 ##
 ##

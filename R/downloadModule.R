@@ -91,7 +91,7 @@ downloadUI <- function(id) {
 
         )
     ),
-  footer_curve_ui()
+  uiOutput(ns("footer_curve"))
   )
 
 }
@@ -164,6 +164,11 @@ downloadServer <- function(id, first_visits, language) {
     output$station_modal_content <- renderUI({
       req(language())
       create_station_modal_content(language())
+    })
+
+    output$footer_curve <- renderUI({
+      req(language())
+      gnwt_footer_ui(language())
     })
 
     # ===== FLOW: Simple sync pattern =====

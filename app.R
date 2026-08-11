@@ -38,7 +38,14 @@ ui <- fluidPage(
   use_waiter(),
   # CSS styles
   tags$head(
+    tags$link(
+      rel = "stylesheet",
+      href = "https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap"
+    ),
     tags$style(HTML("
+        body {
+          font-family: 'Noto Sans', sans-serif;
+          }
          body::after {
           content: '';
           position: absolute;
@@ -54,7 +61,8 @@ ui <- fluidPage(
             margin-bottom: 0;
             border-radius: 0;
             background-color: #ffffff;
-            height: 60px;
+            height: auto;
+            min-height: 60px;
             padding: 0;
             border-bottom: none;
             width: 100% !important;
@@ -62,6 +70,17 @@ ui <- fluidPage(
           }
           .navbar-header {
             position: static !important;
+            float: none !important;
+            flex: 0 1 auto;
+            max-width: 100%;
+          }
+          .navbar > .container-fluid {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            width: 100%;
+            /* Reserve space so tabs don't slide under the absolute language toggle */
+            padding-right: 72px;
           }
         .navbar-brand {
           color: #000000 !important;
@@ -77,24 +96,84 @@ ui <- fluidPage(
           padding: 0;
         }
         .navbar-title-text{
+          font-size: 20px;
           margin-right: 20px;
         }
 
-        .navbar-nav {
-          background-color: #0066cc;
-          height: 60px;
-          padding: 0;
+      /* GNWT wordmark next to logo (footer structure, black on white) */
+        .navbar-logo-click {
           display: flex;
-          align-items:center !important;
-          margin: 0;
-          border: none;
-          position: static !important;
+          align-items: center;
+          gap: 14px;
+          cursor: pointer;
         }
-        .navbar-nav > li > a {
-          color: #ffffff !important;
-          font-size: 14px;
-          margin: 0;
-          border: none;
+        .navbar-gnwt-brand {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          line-height: 1.1;
+          color: #000000;
+          text-align: left;
+          user-select: none;
+        }
+        .navbar-gnwt-brand-line--small {
+          font-family: Calibri, sans-serif;
+          font-size: 15px;
+          font-weight: 355;
+          letter-spacing: 0.01em;
+        }
+        .navbar-gnwt-brand-line--large {
+          font-family: Candara, sans-serif;
+          font-size: 20px;
+          font-weight: 500;
+          letter-spacing: 0.01em;
+        }
+
+        /* French: slightly smaller */
+        .navbar-gnwt-brand--fr .navbar-gnwt-brand-line--small {
+          font-size: 13px;
+        }
+        .navbar-gnwt-brand--fr .navbar-gnwt-brand-line--large {
+          font-size: 17px;
+        }
+
+          .navbar-nav {
+            background-color: #0066cc;
+            height: 60px;
+            padding: 0;
+            display: flex !important;
+            align-items: center !important;
+            float: none !important;
+            /* Push tab group to the right while on the same row as the title */
+            margin: 0 0 0 auto !important;
+            border: none;
+            position: static !important;
+            flex: 0 1 auto;
+            min-width: max-content;
+            max-width: 100%;
+            justify-content: flex-end;
+          }
+          /* Applied by JS only after the tabs have actually wrapped */
+          .navbar-nav.is-wrapped {
+            flex: 0 0 auto;
+            flex-basis: auto;
+            width: max-content;
+            justify-content: center;
+            margin-left: auto !important;
+            margin-right: auto !important;
+          }
+          .navbar-nav > li > a {
+            color: #ffffff !important;
+            font-size: 13px;
+            margin: 0;
+            border: none;
+          }
+        .navbar-nav > li > a .nav-tab-multiline {
+          display: inline-block;
+          max-width: 90px;
+          white-space: normal;
+          line-height: 1.15;
+          text-align: center;
         }
         .navbar-nav > li.active > a {
           color: #ffffff !important;
@@ -120,10 +199,27 @@ ui <- fluidPage(
         z-index: 1;
       }
       .leaflet-tooltip {
-  font-size: 14px !important;
-  font-weight: bold !important;
-  padding: 6px 10px !important;
-}
+        font-size: 15px !important;
+        font-weight: bold !important;
+        padding: 6px 10px !important;
+        }
+          /* Layers control: smaller text + scroll with more basins */
+          .leaflet-control-layers {
+            font-size: 11px !important;
+            line-height: 1.25 !important;
+          }
+          .leaflet-control-layers-expanded {
+            max-height: min(55vh, 420px) !important;
+            overflow-y: auto !important;
+            padding-right: 4px;
+          }
+          .leaflet-control-layers label {
+            margin-bottom: 2px !important;
+            font-weight: normal !important;
+          }
+          .leaflet-control-layers-separator {
+            margin: 4px 0 !important;
+          }
                 .contact-bar {
           position: fixed;
           bottom: 0;
@@ -173,7 +269,20 @@ ui <- fluidPage(
             text-decoration: underline;
           }
 
-            /* Shared popup styles for both metadata and summary maps */
+        /* Full label on large screens; short on medium */
+          .lang-label-short {
+            display: none;
+          }
+          @media (max-width: 980px) {
+            .lang-label-full {
+              display: none;
+            }
+            .lang-label-short {
+              display: inline;
+            }
+          }
+
+  /* Shared popup styles for both metadata and summary maps */
   .metadata-popup .leaflet-popup-content-wrapper {
     font-size: 16px !important;
     width: fit-content !important;
@@ -415,7 +524,7 @@ ui <- fluidPage(
     align-items: center;
     justify-content: center;
     color: inherit;
-    font-family: Arial, sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     font-size: 17px;
     font-weight: bold;
     text-decoration: none;
@@ -479,8 +588,28 @@ ui <- fluidPage(
   }
 
 
-  /* ===== Footer on medium sized screen ===== */
+  /* ===== Wordmark and Footer on medium sized screen ===== */
 @media (min-width: 769px) and (max-width: 980px) {
+
+  /* Nacbar title: slightly smaller on med so it doesn't wrap */
+  .navbar-title-text{
+  font-size: 18px;
+  }
+
+  /* Navbar wordmark: slightly smaller on medium so it doesn't wrap */
+  .navbar-gnwt-brand-line--small {
+    font-size: 12px;
+  }
+  .navbar-gnwt-brand-line--large {
+    font-size: 16px;
+  }
+
+  .navbar-gnwt-brand--fr .navbar-gnwt-brand-line--small {
+    font-size: 10px;
+  }
+  .navbar-gnwt-brand--fr .navbar-gnwt-brand-line--large {
+    font-size: 13px;
+  }
 
   .site-footer__inner {
     flex-wrap: nowrap;
@@ -540,6 +669,25 @@ ui <- fluidPage(
     .navbar-brand img {
       height: 28px;
     }
+
+    .navbar-gnwt-brand-line--small {
+      font-size: 9px;
+    }
+    .navbar-gnwt-brand-line--large {
+      font-size: 12px;
+    }
+
+    .navbar-gnwt-brand--fr .navbar-gnwt-brand-line--small {
+      font-size: 8px;
+    }
+    .navbar-gnwt-brand--fr .navbar-gnwt-brand-line--large {
+      font-size: 10px;
+    }
+
+    .navbar-logo-click {
+      gap: 6px;
+    }
+
     body::after {
       top: 45px !important;
       height: 6px !important;
@@ -711,7 +859,26 @@ ui <- fluidPage(
     if (tabLink.length > 0) {
       tabLink.click();
     }
+    }
+
+        function updateNavbarWrap() {
+    var header = document.querySelector('.navbar .navbar-header');
+    var nav = document.querySelector('.navbar .navbar-nav');
+    if (!header || !nav) return;
+    // Tabs are wrapped when they sit clearly below the brand/title row
+    var wrapped = nav.getBoundingClientRect().top >
+                  header.getBoundingClientRect().top + 8;
+    nav.classList.toggle('is-wrapped', wrapped);
   }
+  $(document).ready(function() {
+    updateNavbarWrap();
+    $(window).on('resize', updateNavbarWrap);
+    // Navbar is rebuilt on language change
+    new MutationObserver(function() {
+      updateNavbarWrap();
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+
     function mobileSwitchTab(tabValue) {
       var tabLink = $('#navbar').find('a[data-value=\"' + tabValue + '\"]');
       if (tabLink.length > 0) {
@@ -819,6 +986,13 @@ server <- function(input, output, session) {
       peel <- load_github_rdsshp("10MC002_DrainageBasin_BassinDeDrainage.rds")
       hay <- load_github_rdsshp("07OB001_DrainageBasin_BassinDeDrainage.rds")
       liard <- load_github_rdsshp("10ED002_DrainageBasin_BassinDeDrainage.rds")
+      lamartre <- load_github_rdsshp("07TA001_DrainageBasin_BassinDeDrainage.rds")
+      willow <- load_github_rdsshp("10GB006_DrainageBasin_BassinDeDrainage.rds")
+      camsell <- load_github_rdsshp("10JA002_DrainageBasin_BassinDeDrainage.rds")
+      greatbear <- load_github_rdsshp("10JC003_DrainageBasin_BassinDeDrainage.rds")
+      arcticred <- load_github_rdsshp("10LA002_DrainageBasin_BassinDeDrainage.rds")
+      hareind <- load_github_rdsshp("10LD004_DrainageBasin_BassinDeDrainage.rds")
+      taltson <- load_github_rdsshp("07QA001_DrainageBasin_BassinDeDrainage.rds")
 
       preloaded_data(list(
         nwt_boundary = nwt_boundary,
@@ -828,7 +1002,14 @@ server <- function(input, output, session) {
         YKriver = YKriver,
         peel = peel,
         hay = hay,
-        liard = liard
+        liard = liard,
+        lamartre = lamartre,
+        willow = willow,
+        camsell = camsell,
+        greatbear = greatbear,
+        arcticred = arcticred,
+        hareind = hareind,
+        taltson = taltson
       ))
     })
     w$hide()
@@ -915,7 +1096,8 @@ server <- function(input, output, session) {
           img(
             src = "logo_PB.png",
             style = "height: 35px; object-fit: contain; padding: 0; filter: none; box-shadow: none"
-          )
+          ),
+          gnwt_navbar_wordmark(language())
         ),
         span(
           if(language() == "fr") {
@@ -924,7 +1106,7 @@ server <- function(input, output, session) {
             "NWT Water Level and Flow Data Explorer"
           },
           class = "navbar-title-text",
-          style = "font-size: 24px; margin-left: 35px; margin-right: 35px; cursor: pointer;",
+          style = "margin-left: 30px; margin-right: 20px; cursor: pointer;",
           onclick = I(sprintf("switchTabOnly('%s');", js_esc)),
           title = if (language() == "fr") "Aller à À propos" else "Go to About"
         )
@@ -941,7 +1123,12 @@ server <- function(input, output, session) {
         class = "language-toggle-container",
         actionButton(
           "toggle_language",
-          if(language() == "fr") "English" else "Français",
+          label = tagList(
+            tags$span(class = "lang-label-full",
+                      if (language() == "fr") "English" else "Français"),
+            tags$span(class = "lang-label-short",
+                      if (language() == "fr") "EN" else "FR")
+          ),
           class = "language-toggle-link",
           style = "background: none; border: none; font-size: 12px; padding: 8px 12px; cursor: pointer;"
         )
@@ -951,7 +1138,11 @@ server <- function(input, output, session) {
         aboutUI("about")
       ),
       tabPanel(
-        if(language() == "fr") "Données de niveau d'eau" else "Water Level Data",
+        title = tags$span(
+          class = "nav-tab-multiline",
+          if (language() == "fr") "Données de niveau d'eau" else "Water Level Data"
+        ),
+        value = if (language() == "fr") "Données de niveau d'eau" else "Water Level Data",
         summaryUI("summary")
       ),
       tabPanel(
@@ -1061,7 +1252,6 @@ server <- function(input, output, session) {
         panel.style.display = 'none';
       });
     ")
-
 })
 
   # Track module initialization to prevent double initialization

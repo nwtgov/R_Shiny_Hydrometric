@@ -110,6 +110,13 @@ metadataServer <- function(id, preloaded_data, language) {
       peel <- preloaded_data()$peel
       hay <- preloaded_data()$hay
       liard <- preloaded_data()$liard
+      lamartre <- preloaded_data()$lamartre
+      willow <- preloaded_data()$willow
+      camsell <- preloaded_data()$camsell
+      greatbear <- preloaded_data()$greatbear
+      arcticred <- preloaded_data()$arcticred
+      hareind <- preloaded_data()$hareind
+      taltson <- preloaded_data()$taltson
     } else {
       nwt_boundary <- load_github_rdsshp("NWT_ENR_BND_FND.rds")
       mackenzie_basin <- load_github_rdsshp("MackenzieRiverBasin_FDA.rds")
@@ -119,6 +126,13 @@ metadataServer <- function(id, preloaded_data, language) {
       peel <- load_github_rdsshp("10MC002_DrainageBasin_BassinDeDrainage.rds")
       hay <- load_github_rdsshp("07OB001_DrainageBasin_BassinDeDrainage.rds")
       liard <- load_github_rdsshp("10ED002_DrainageBasin_BassinDeDrainage.rds")
+      lamartre <- load_github_rdsshp("07TA001_DrainageBasin_BassinDeDrainage.rds")
+      willow <- load_github_rdsshp("10GB006_DrainageBasin_BassinDeDrainage.rds")
+      camsell <- load_github_rdsshp("10JA002_DrainageBasin_BassinDeDrainage.rds")
+      greatbear <- load_github_rdsshp("10JC003_DrainageBasin_BassinDeDrainage.rds")
+      arcticred <- load_github_rdsshp("10LA002_DrainageBasin_BassinDeDrainage.rds")
+      hareind <- load_github_rdsshp("10LD004_DrainageBasin_BassinDeDrainage.rds")
+      taltson <- load_github_rdsshp("07QA001_DrainageBasin_BassinDeDrainage.rds")
     }
 
     # Station data loaded in "load_hydrometric_data.R" -
@@ -306,7 +320,14 @@ metadataServer <- function(id, preloaded_data, language) {
             YKriver = "Bassin de la rivière Yellowknife",
             peel = "Bassin de la rivière Peel",
             hay = "Bassin de la rivière au Foin",
-            liard = "Bassin de la rivière Liard"
+            liard = "Bassin de la rivière Liard",
+            lamartre = "Bassin de la rivière La Martre",
+            willow = "Bassin de la rivière Willowlake",
+            camsell = "Bassin de la rivière Camsell",
+            greatbear = "Bassin du lac Great Bear",
+            arcticred = "Bassin de la rivière Arctic Red",
+            hareind = "Bassin de la rivière Hare Indian",
+            taltson = "Bassin de la rivière Taltson"
           ),
           base_maps = list(
             cartodb = "Carte Simple",
@@ -352,7 +373,14 @@ metadataServer <- function(id, preloaded_data, language) {
             YKriver = "Yellowknife River Basin",
             peel = "Peel Basin",
             hay = "Hay Basin",
-            liard = "Liard Basin"
+            liard = "Liard Basin",
+            lamartre = "La Martre River Basin",
+            willow = "Willowlake Basin",
+            camsell = "Camsell River Basin",
+            greatbear = "Great Bear Lake Basin",
+            arcticred = "Arctic Red River Basin",
+            hareind = "Hare Indian River Basin",
+            taltson = "Taltson River Basin"
           ),
           base_maps = list(
             cartodb = "Simple Map",
@@ -476,7 +504,7 @@ metadataServer <- function(id, preloaded_data, language) {
 
       leaflet() %>%
         addTiles() %>%
-        setView(lng = -123, lat = 63.7, zoom = 4) %>%
+        setView(lng = -123, lat = 64, zoom = 4) %>%
         addProviderTiles(providers$CartoDB.Positron, group = texts$base_maps$cartodb) %>%
         addProviderTiles(providers$Esri.WorldImagery, group = texts$base_maps$esri) %>%
         addPolylines(data = nwt_boundary, weight = 2, color = "#000000", opacity = 0.8, group = texts$basins$nwt_boundary) %>%
@@ -487,21 +515,42 @@ metadataServer <- function(id, preloaded_data, language) {
         addPolylines(data = peel, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$peel) %>%
         addPolylines(data = hay, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$hay) %>%
         addPolylines(data = liard, weight = 2, color = "#999999", opacity = 0.8, group = texts$basins$liard) %>%
+        addPolylines(data = lamartre, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$lamartre) %>%
+        addPolylines(data = willow, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$willow) %>%
+        addPolylines(data = camsell, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$camsell) %>%
+        addPolylines(data = greatbear, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$greatbear) %>%
+        addPolylines(data = arcticred, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$arcticred) %>%
+        addPolylines(data = hareind, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$hareind) %>%
+        addPolylines(data = taltson, weight = 2, color = "#999999", opacity = 0.8, group = map_text()$basins$taltson) %>%
         addCircleMarkers(
           lng = coords[, 1],
           lat = coords[, 2],
           color = "black",
           fillColor = status_pal(station_status),
-          radius = 5,
+          radius = 7,
           label = meta_df$formatted_name,
           weight = 1,
           opacity = 0.8,
           fillOpacity = 0.8,
           popup = popup_content,
-          popupOptions = popupOptions(autoPan = TRUE)
+          popupOptions = popupOptions(autoPan = TRUE,
+                                      keepInView = TRUE)
         ) %>%
         addLayersControl(
-          overlayGroups = c(texts$basins$nwt_boundary, texts$basins$mackenzie, texts$basins$slave, texts$basins$snare, texts$basins$YKriver, texts$basins$liard, texts$basins$peel, texts$basins$hay),
+          overlayGroups = c(texts$basins$nwt_boundary,
+                            texts$basins$mackenzie,
+                            texts$basins$arcticred,
+                            texts$basins$camsell,
+                            texts$basins$greatbear,
+                            texts$basins$hareind,
+                            texts$basins$hay,
+                            texts$basins$lamartre,
+                            texts$basins$liard,
+                            texts$basins$peel,
+                            texts$basins$slave,
+                            texts$basins$snare,
+                            texts$basins$taltson,
+                            texts$basins$YKriver),
           baseGroups = c(texts$base_maps$cartodb, texts$base_maps$esri),
           options = layersControlOptions(collapsed = TRUE)
         ) %>%
@@ -562,7 +611,8 @@ metadataServer <- function(id, preloaded_data, language) {
             opacity = 0.8,
             fillOpacity = 0.8,
             popup = popup_content,
-            popupOptions = popupOptions(autoPan = TRUE)
+            popupOptions = popupOptions(autoPan = TRUE,
+                                        keepInView = TRUE)
           )
       }, error = function(e) NULL)
     })
@@ -590,7 +640,14 @@ metadataServer <- function(id, preloaded_data, language) {
                 map_text_val$basins$YKriver,
                 map_text_val$basins$liard,
                 map_text_val$basins$peel,
-                map_text_val$basins$hay
+                map_text_val$basins$hay,
+                map_text_val$basins$lamartre,
+                map_text_val$basins$willow,
+                map_text_val$basins$camsell,
+                map_text_val$basins$greatbear,
+                map_text_val$basins$arcticred,
+                map_text_val$basins$hareind,
+                map_text_val$basins$taltson
               ))
             sub_basins_hidden(TRUE)
           }, error = function(e) {
