@@ -200,6 +200,24 @@ gnwt_footer_ui <- function(lang = "en") {
   )
 }
 
+# cartoDB helper function
+carto_tiles <- function(map, style = "light_all", group = "CartoDB") {
+  key <- Sys.getenv("CARTO_API_KEY")          # match your .Renviron name
+  if (!nzchar(key)) stop("CARTO_API_KEY not set in .Renviron")
+
+  leaflet::addTiles(
+    map,
+    urlTemplate = sprintf(
+      "https://{s}.basemaps.cartocdn.com/rastertiles/%s/{z}/{x}/{y}.png?key=%s",
+      style, key),
+    attribution = paste0(
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, ',
+      '&copy; <a href="https://carto.com/attributions">CARTO</a>'),
+    group = group,
+    options = leaflet::tileOptions(subdomains = "abcd", maxZoom = 20)
+  )
+}
+
 # SummaryModule
 #Prep table for popup display (translate select column values)
 summary_df_display <- function(summary_df, lang) {

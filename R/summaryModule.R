@@ -445,7 +445,7 @@ summaryServer <- function(id, active_stations_within_basin, preloaded_data, lang
       leaflet(options = leafletOptions(zoomSnap = 0.25, zoomDelta = 0.5)) %>%
         addTiles() %>%
         setView(lng = -123, lat = 64, zoom = 4.25) %>%
-        addProviderTiles(providers$CartoDB.Positron, group = texts$base_maps$cartodb) %>%
+        carto_tiles(style = "light_all", group = "CartoDB") %>%
         addProviderTiles(providers$Esri.WorldImagery, group = texts$base_maps$esri) %>%
         addPolylines(data = nwt_boundary, weight = 2, color = "#000000", opacity = 0.8,
                      group = texts$basins$nwt_boundary) %>%
